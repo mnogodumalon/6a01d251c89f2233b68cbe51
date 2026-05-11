@@ -1,0 +1,1 @@
+- Prompt-Generator Pro (prompt_generator_pro): vorlage[lookup/select], rolle_persona[string/textarea], kontext[string/textarea], aufgabe[string/textarea], format_ausgabe[string/textarea], regeln[string/textarea], cot_analyse[bool], generierter_prompt[string/textarea]

@@ -1,0 +1,144 @@
+{
+  "appgroup_id": "6a01d251c89f2233b68cbe51",
+  "appgroup_name": "Prompt-Generator Pro",
+  "apps": {
+    "prompt_generator_pro": {
+      "app_id": "6a01d24881f0aa7a74f3f3a4",
+      "name": "Prompt-Generator Pro",
+      "main": false,
+      "controls": {
+        "vorlage": {
+          "identifier": "vorlage",
+          "label": "Vorlage waehlen",
+          "type": "lookup",
+          "subtype": "select",
+          "fulltype": "lookup/select",
+          "description": "One selected option of multiple available options (or `null`/`None`).\n\nThe available options are defined in the `lookup_data` attribute of this control.\n\nThe field value will be the key in this `lookup_data` attribute (or `null`/`None`).\n\nDisplayed as single-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true,
+          "lookup_data": {
+            "email": "Professionelle E-Mail verfassen",
+            "blogpost": "Blogpost-Gliederung erstellen",
+            "linkedin": "Social-Media-Post (LinkedIn)",
+            "manuell": "Manuelle Eingabe"
+          }
+        },
+        "rolle_persona": {
+          "identifier": "rolle_persona",
+          "label": "Rolle / Persona der KI",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "kontext": {
+          "identifier": "kontext",
+          "label": "Kontext / Ausgangssituation",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "aufgabe": {
+          "identifier": "aufgabe",
+          "label": "Konkrete Aufgabe / Ziel",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "format_ausgabe": {
+          "identifier": "format_ausgabe",
+          "label": "Format der Ausgabe",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "regeln": {
+          "identifier": "regeln",
+          "label": "Regeln & Einschraenkungen",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "cot_analyse": {
+          "identifier": "cot_analyse",
+          "label": "Schritt-fuer-Schritt-Analyse anfordern",
+          "type": "bool",
+          "subtype": null,
+          "fulltype": "bool",
+          "description": "A boolean value, i.e. `true` or `false` (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        },
+        "generierter_prompt": {
+          "identifier": "generierter_prompt",
+          "label": "Generierter Prompt",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": true,
+          "in_expert_search": true
+        }
+      }
+    }
+  },
+  "metadata": {
+    "apps_list": [
+      "Prompt-Generator Pro"
+    ]
+  }
+}

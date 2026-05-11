@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "forms": [
+    {
+      "entity": "prompt_generator_pro",
+      "app_id": "6a01d24881f0aa7a74f3f3a4",
+      "path": "/rest/apps/6a01d24881f0aa7a74f3f3a4/records",
+      "allowed_fields": [
+        "vorlage",
+        "rolle_persona",
+        "kontext",
+        "aufgabe",
+        "format_ausgabe",
+        "regeln",
+        "cot_analyse",
+        "generierter_prompt"
+      ],
+      "pow": true,
+      "pow_difficulty": 50000,
+      "title": "Prompt-Generator Pro — Form"
+    }
+  ]
+}
