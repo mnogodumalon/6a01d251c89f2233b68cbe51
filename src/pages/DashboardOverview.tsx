@@ -184,7 +184,7 @@ export default function DashboardOverview() {
           return (
             <button
               key={opt.key}
-              onClick={() => setActiveVorlage(isActive ? null : opt.key)}
+              onClick={() => { setActiveVorlage(isActive ? null : opt.key); setSelectedId(null); }}
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all hover:shadow-sm ${colorClass} ${
                 isActive ? 'ring-2 ring-offset-1 ring-current shadow-sm' : 'opacity-80 hover:opacity-100'
               }`}
@@ -199,7 +199,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Main: Liste + Detail */}
-      <div className={`grid gap-4 min-h-[500px] ${activeVorlage === null ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-[380px_1fr]'}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 min-h-[500px]">
 
         {/* Linke Spalte: Liste */}
         <div className="flex flex-col gap-3">
@@ -295,8 +295,8 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Rechte Spalte: Detail / Leer-Zustand — nur wenn ein Vorlage-Filter aktiv ist */}
-        {activeVorlage !== null && <div className="rounded-2xl border bg-card overflow-hidden">
+        {/* Rechte Spalte: Detail / Leer-Zustand */}
+        <div className="rounded-2xl border bg-card overflow-hidden">
           {!selectedRecord ? (
             <div className="flex flex-col items-center justify-center h-full py-24 gap-4 text-center px-6">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -424,7 +424,7 @@ export default function DashboardOverview() {
               </div>
             </div>
           )}
-        </div>}
+        </div>
       </div>
 
       {/* Dialog */}
