@@ -28,6 +28,7 @@ const VORLAGE_COLORS: Record<string, string> = {
   email: 'bg-blue-100 text-blue-700 border-blue-200',
   blogpost: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   linkedin: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  bild_generieren: 'bg-pink-100 text-pink-700 border-pink-200',
   manuell: 'bg-orange-100 text-orange-700 border-orange-200',
 };
 
@@ -40,8 +41,9 @@ function getVorlageLabel(vorlage: PromptGeneratorPro['fields']['vorlage']): stri
 
 function getVorlageKey(vorlage: PromptGeneratorPro['fields']['vorlage']): string {
   if (!vorlage) return 'manuell';
-  if (typeof vorlage === 'object' && 'key' in vorlage) return vorlage.key;
-  return String(vorlage);
+  const raw = typeof vorlage === 'object' && 'key' in vorlage ? vorlage.key : String(vorlage);
+  // Normalize legacy key 'ein_bild_generieren' → 'bild_generieren'
+  return raw === 'ein_bild_generieren' ? 'bild_generieren' : raw;
 }
 
 function PromptSection({ label, value, icon }: { label: string; value?: string; icon: React.ReactNode }) {
@@ -83,6 +85,7 @@ export default function DashboardOverview() {
   } = useDashboardData();
 
   const [search, setSearch] = useState('');
+  const [activeVorlage, setActiveVorlage] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<PromptGeneratorPro | null>(null);
@@ -90,9 +93,13 @@ export default function DashboardOverview() {
 
   // ALL hooks before early returns
   const filtered = useMemo(() => {
-    if (!search.trim()) return promptGeneratorPro;
+    let list = promptGeneratorPro;
+    if (activeVorlage) {
+      list = list.filter(r => getVorlageKey(r.fields.vorlage) === activeVorlage);
+    }
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return promptGeneratorPro.filter(r => {
+    return list.filter(r => {
       const f = r.fields;
       return (
         getVorlageLabel(f.vorlage).toLowerCase().includes(q) ||
@@ -102,7 +109,7 @@ export default function DashboardOverview() {
         (f.rolle_persona ?? '').toLowerCase().includes(q)
       );
     });
-  }, [promptGeneratorPro, search]);
+  }, [promptGeneratorPro, search, activeVorlage]);
 
   const selectedRecord = useMemo(
     () => promptGeneratorPro.find(r => r.record_id === selectedId) ?? null,
@@ -153,28 +160,46 @@ export default function DashboardOverview() {
         </Button>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Filter-Chips */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => { setActiveVorlage(null); setSelectedId(null); }}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all hover:shadow-sm ${
+            activeVorlage === null
+              ? 'bg-foreground text-background border-foreground'
+              : 'bg-card text-muted-foreground border-border hover:border-foreground/30'
+          }`}
+        >
+          Alle
+          <span className={`text-xs rounded-full px-1.5 py-0.5 font-semibold ${
+            activeVorlage === null ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'
+          }`}>
+            {promptGeneratorPro.length}
+          </span>
+        </button>
         {VORLAGE_OPTIONS.map(opt => {
           const count = promptGeneratorPro.filter(r => getVorlageKey(r.fields.vorlage) === opt.key).length;
           const colorClass = VORLAGE_COLORS[opt.key] ?? VORLAGE_COLORS.manuell;
+          const isActive = activeVorlage === opt.key;
           return (
             <button
               key={opt.key}
-              onClick={() => setSearch(opt.label)}
-              className={`rounded-2xl border px-4 py-3 text-left transition-all hover:shadow-md ${colorClass} ${
-                search === opt.label ? 'ring-2 ring-offset-1 ring-current' : ''
+              onClick={() => setActiveVorlage(isActive ? null : opt.key)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all hover:shadow-sm ${colorClass} ${
+                isActive ? 'ring-2 ring-offset-1 ring-current shadow-sm' : 'opacity-80 hover:opacity-100'
               }`}
             >
-              <div className="text-2xl font-bold">{count}</div>
-              <div className="text-xs font-medium mt-0.5 line-clamp-2 leading-tight">{opt.label}</div>
+              {opt.label}
+              <span className="text-xs rounded-full bg-current/10 px-1.5 py-0.5 font-semibold">
+                {count}
+              </span>
             </button>
           );
         })}
       </div>
 
       {/* Main: Liste + Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 min-h-[500px]">
+      <div className={`grid gap-4 min-h-[500px] ${activeVorlage === null ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-[380px_1fr]'}`}>
 
         {/* Linke Spalte: Liste */}
         <div className="flex flex-col gap-3">
@@ -196,9 +221,9 @@ export default function DashboardOverview() {
                 <IconFileText size={40} className="text-muted-foreground/40" stroke={1.5} />
                 <div>
                   <p className="font-medium text-muted-foreground">Keine Prompts gefunden</p>
-                  {search && (
+                  {(search || activeVorlage) && (
                     <button
-                      onClick={() => setSearch('')}
+                      onClick={() => { setSearch(''); setActiveVorlage(null); }}
                       className="text-sm text-primary hover:underline mt-1"
                     >
                       Filter zurücksetzen
@@ -270,8 +295,8 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Rechte Spalte: Detail / Leer-Zustand */}
-        <div className="rounded-2xl border bg-card overflow-hidden">
+        {/* Rechte Spalte: Detail / Leer-Zustand — nur wenn ein Vorlage-Filter aktiv ist */}
+        {activeVorlage !== null && <div className="rounded-2xl border bg-card overflow-hidden">
           {!selectedRecord ? (
             <div className="flex flex-col items-center justify-center h-full py-24 gap-4 text-center px-6">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -399,7 +424,7 @@ export default function DashboardOverview() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* Dialog */}

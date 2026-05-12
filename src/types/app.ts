@@ -26,7 +26,7 @@ export const APP_IDS = {
 
 export const LOOKUP_OPTIONS: Record<string, Record<string, {key: string, label: string}[]>> = {
   'prompt_generator_pro': {
-    vorlage: [{ key: "email", label: "Professionelle E-Mail verfassen" }, { key: "blogpost", label: "Blogpost-Gliederung erstellen" }, { key: "linkedin", label: "Social-Media-Post (LinkedIn)" }, { key: "manuell", label: "Manuelle Eingabe" }],
+    vorlage: [{ key: "email", label: "Professionelle E-Mail verfassen" }, { key: "blogpost", label: "Blogpost-Gliederung erstellen" }, { key: "linkedin", label: "Social-Media-Post (LinkedIn)" }, { key: "bild_generieren", label: "Ein Bild generieren" }, { key: "manuell", label: "Manuelle Eingabe" }],
   },
 };
 
