@@ -117,22 +117,28 @@ export default function DashboardOverview() {
   );
 
   const handleCreate = useCallback(async (fields: PromptGeneratorPro['fields']) => {
-    await LivingAppsService.createPromptGeneratorProEntry(fields);
-    fetchAll();
+    try {
+      await LivingAppsService.createPromptGeneratorProEntry(fields);
+      fetchAll();
+    } catch { /* error already dispatched via errorbus:emit */ }
   }, [fetchAll]);
 
   const handleUpdate = useCallback(async (fields: PromptGeneratorPro['fields']) => {
     if (!editRecord) return;
-    await LivingAppsService.updatePromptGeneratorProEntry(editRecord.record_id, fields);
-    fetchAll();
+    try {
+      await LivingAppsService.updatePromptGeneratorProEntry(editRecord.record_id, fields);
+      fetchAll();
+    } catch { /* error already dispatched via errorbus:emit */ }
   }, [editRecord, fetchAll]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
-    await LivingAppsService.deletePromptGeneratorProEntry(deleteTarget.record_id);
-    if (selectedId === deleteTarget.record_id) setSelectedId(null);
-    setDeleteTarget(null);
-    fetchAll();
+    try {
+      await LivingAppsService.deletePromptGeneratorProEntry(deleteTarget.record_id);
+      if (selectedId === deleteTarget.record_id) setSelectedId(null);
+      setDeleteTarget(null);
+      fetchAll();
+    } catch { /* error already dispatched via errorbus:emit */ }
   }, [deleteTarget, selectedId, fetchAll]);
 
   if (loading) return <DashboardSkeleton />;
