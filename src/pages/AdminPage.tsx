@@ -30,7 +30,6 @@ const PROMPTGENERATORPRO_FIELDS = [
   { key: 'aufgabe', label: 'Konkrete Aufgabe / Ziel', type: 'string/textarea' },
   { key: 'format_ausgabe', label: 'Format der Ausgabe', type: 'string/textarea' },
   { key: 'regeln', label: 'Regeln & Einschraenkungen', type: 'string/textarea' },
-  { key: 'cot_analyse', label: 'Schritt-fuer-Schritt-Analyse anfordern', type: 'bool' },
   { key: 'generierter_prompt', label: 'Generierter Prompt', type: 'string/textarea' },
 ];
 

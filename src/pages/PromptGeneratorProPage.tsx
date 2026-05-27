@@ -157,12 +157,6 @@ export default function PromptGeneratorProPage() {
                   {sortKey === 'regeln' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
                 </span>
               </TableHead>
-              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('cot_analyse')}>
-                <span className="inline-flex items-center gap-1">
-                  Schritt-fuer-Schritt-Analyse anfordern
-                  {sortKey === 'cot_analyse' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
-                </span>
-              </TableHead>
               <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('generierter_prompt')}>
                 <span className="inline-flex items-center gap-1">
                   Generierter Prompt
@@ -181,7 +175,6 @@ export default function PromptGeneratorProPage() {
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.aufgabe ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.format_ausgabe ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.regeln ?? '—'}</span></TableCell>
-                <TableCell><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${record.fields.cot_analyse ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{record.fields.cot_analyse ? 'Yes' : 'No'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.generierter_prompt ?? '—'}</span></TableCell>
                 <TableCell>
                   <div className="flex gap-1">

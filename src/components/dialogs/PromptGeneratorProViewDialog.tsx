@@ -57,14 +57,6 @@ export function PromptGeneratorProViewDialog({ open, onClose, record, onEdit }: 
             <p className="text-sm whitespace-pre-wrap">{record.fields.regeln ?? '—'}</p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Schritt-fuer-Schritt-Analyse anfordern</Label>
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-              record.fields.cot_analyse ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-            }`}>
-              {record.fields.cot_analyse ? 'Yes' : 'No'}
-            </span>
-          </div>
-          <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Generierter Prompt</Label>
             <p className="text-sm whitespace-pre-wrap">{record.fields.generierter_prompt ?? '—'}</p>
           </div>

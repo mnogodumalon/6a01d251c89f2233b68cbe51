@@ -6,7 +6,6 @@ import { formatDate } from '@/lib/formatters';
 import { useState, useMemo, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PromptGeneratorProDialog } from '@/components/dialogs/PromptGeneratorProDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -15,7 +14,7 @@ import {
   IconAlertCircle, IconTool, IconRefresh, IconCheck,
   IconPlus, IconSearch, IconCopy, IconCopyCheck, IconPencil, IconTrash,
   IconSparkles, IconBrain, IconTarget, IconLayoutList, IconRuler,
-  IconStepInto, IconCheck as IconCheckmark, IconChevronRight,
+  IconCheck as IconCheckmark, IconChevronRight,
   IconFileText,
 } from '@tabler/icons-react';
 
@@ -270,12 +269,6 @@ export default function DashboardOverview() {
                         <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium border ${colorClass}`}>
                           {getVorlageLabel(record.fields.vorlage)}
                         </span>
-                        {record.fields.cot_analyse && (
-                          <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200">
-                            <IconStepInto size={10} />
-                            CoT
-                          </span>
-                        )}
                         {hasPrompt && (
                           <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 border border-green-200">
                             <IconCheckmark size={10} />
@@ -333,12 +326,6 @@ export default function DashboardOverview() {
                     <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold border ${selectedColorClass}`}>
                       {getVorlageLabel(selectedRecord.fields.vorlage)}
                     </span>
-                    {selectedRecord.fields.cot_analyse && (
-                      <Badge variant="secondary" className="gap-1 text-xs">
-                        <IconStepInto size={10} />
-                        Schritt-für-Schritt
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Erstellt: {formatDate(selectedRecord.createdat)}

@@ -7,7 +7,6 @@ import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { lookupKey } from '@/lib/formatters';
 
 // Empty PROXY_BASE → relative URLs (dashboard and form-proxy share the domain).
@@ -188,17 +187,6 @@ export default function PublicFormPromptGeneratorPro() {
               onChange={e => setFields(f => ({ ...f, regeln: e.target.value }))}
               rows={3}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cot_analyse">Schritt-fuer-Schritt-Analyse anfordern</Label>
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id="cot_analyse"
-                checked={!!fields.cot_analyse}
-                onCheckedChange={(v) => setFields(f => ({ ...f, cot_analyse: !!v }))}
-              />
-              <Label htmlFor="cot_analyse" className="font-normal">Schritt-fuer-Schritt-Analyse anfordern</Label>
-            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="generierter_prompt">Generierter Prompt</Label>

@@ -118,7 +118,7 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
         }
       }
       const photoContext = contextParts.length ? contextParts.join('\n') : undefined;
-      const schema = `{\n  "vorlage": LookupValue | null, // Vorlage waehlen (select one key: "email" | "blogpost" | "linkedin" | "manuell") mapping: email=Professionelle E-Mail verfassen, blogpost=Blogpost-Gliederung erstellen, linkedin=Social-Media-Post (LinkedIn), manuell=Manuelle Eingabe\n  "rolle_persona": string | null, // Rolle / Persona der KI\n  "kontext": string | null, // Kontext / Ausgangssituation\n  "aufgabe": string | null, // Konkrete Aufgabe / Ziel\n  "format_ausgabe": string | null, // Format der Ausgabe\n  "regeln": string | null, // Regeln & Einschraenkungen\n  "cot_analyse": boolean | null, // Schritt-fuer-Schritt-Analyse anfordern\n  "generierter_prompt": string | null, // Generierter Prompt\n}`;
+      const schema = `{\n  "vorlage": LookupValue | null, // Vorlage waehlen (select one key: "email" | "blogpost" | "linkedin" | "manuell") mapping: email=Professionelle E-Mail verfassen, blogpost=Blogpost-Gliederung erstellen, linkedin=Social-Media-Post (LinkedIn), manuell=Manuelle Eingabe\n  "rolle_persona": string | null, // Rolle / Persona der KI\n  "kontext": string | null, // Kontext / Ausgangssituation\n  "aufgabe": string | null, // Konkrete Aufgabe / Ziel\n  "format_ausgabe": string | null, // Format der Ausgabe\n  "regeln": string | null, // Regeln & Einschraenkungen\n  "generierter_prompt": string | null, // Generierter Prompt\n}`;
       const raw = await extractFromInput<Record<string, unknown>>(schema, {
         dataUri: uri,
         userText: aiText.trim() || undefined,
@@ -424,17 +424,6 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
               onChange={e => setFields(f => ({ ...f, regeln: e.target.value }))}
               rows={3}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cot_analyse">Schritt-fuer-Schritt-Analyse anfordern</Label>
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id="cot_analyse"
-                checked={!!fields.cot_analyse}
-                onCheckedChange={(v) => setFields(f => ({ ...f, cot_analyse: !!v }))}
-              />
-              <Label htmlFor="cot_analyse" className="font-normal">Schritt-fuer-Schritt-Analyse anfordern</Label>
-            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="generierter_prompt">Generierter Prompt</Label>

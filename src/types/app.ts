@@ -14,7 +14,6 @@ export interface PromptGeneratorPro {
     aufgabe?: string;
     format_ausgabe?: string;
     regeln?: string;
-    cot_analyse?: boolean;
     generierter_prompt?: string;
   };
 }
@@ -38,7 +37,6 @@ export const FIELD_TYPES: Record<string, Record<string, string>> = {
     'aufgabe': 'string/textarea',
     'format_ausgabe': 'string/textarea',
     'regeln': 'string/textarea',
-    'cot_analyse': 'bool',
     'generierter_prompt': 'string/textarea',
   },
 };
