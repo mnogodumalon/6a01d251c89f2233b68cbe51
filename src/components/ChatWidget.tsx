@@ -184,10 +184,10 @@ function CopyButton({ text }: { text: string }) {
         });
       }}
       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-      title={copied ? "Copied!" : "Copy code"}
+      title={copied ? "Kopiert!" : "Code kopieren"}
     >
       {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-      {copied && <span>Copied!</span>}
+      {copied && <span>Kopiert!</span>}
     </button>
   );
 }
@@ -379,7 +379,7 @@ export default function ChatWidget() {
     const text = input.trim();
     if (!text && !image) return;
 
-    const userContent = text || ('Analyze image');
+    const userContent = text || ('Bild analysieren');
     sendMessage(userContent, image ?? undefined);
     setInput('');
     setImage(null);
@@ -421,7 +421,7 @@ export default function ChatWidget() {
             : 'bg-primary text-primary-foreground hover:scale-105 hover:shadow-xl'
           }
         `}
-        aria-label="Assistant"
+        aria-label="Assistent"
       >
         {chatOpen ? <IconX size={18} /> : <IconSparkles size={18} />}
       </button>
@@ -439,7 +439,7 @@ export default function ChatWidget() {
               <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <IconSparkles size={12} className="text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground truncate">Assistant</span>
+              <span className="text-sm font-semibold text-foreground truncate">Assistent</span>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button
@@ -463,7 +463,7 @@ export default function ChatWidget() {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center gap-2 text-muted-foreground">
                 <IconSparkles size={28} stroke={1.5} />
-                <p className="text-xs">Ask a question or upload an image...</p>
+                <p className="text-xs">Frage stellen oder Bild hochladen...</p>
               </div>
             )}
             {messages.map((m) => (
@@ -485,10 +485,10 @@ export default function ChatWidget() {
                       <img src={m.image} alt="" className="max-w-full max-h-32 rounded-lg mb-2" />
                     );
                   })()}
-                  {m.content === 'Working...' ? (
+                  {m.content === 'In Arbeit...' ? (
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <IconLoader2 size={14} className="animate-spin" />
-                      Working...
+                      In Arbeit...
                     </span>
                   ) : m.role === 'assistant' ? (
                     <ChatMarkdown content={m.content} />
@@ -500,11 +500,11 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
-            {chatLoading && messages.length > 0 && messages[messages.length - 1].content !== 'Working...' && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content === '' && (
+            {chatLoading && messages.length > 0 && messages[messages.length - 1].content !== 'In Arbeit...' && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content === '' && (
               <div className="flex justify-start">
                 <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
                   <IconLoader2 size={14} className="animate-spin" />
-                  Thinking...
+                  Denkt nach...
                 </div>
               </div>
             )}
@@ -557,7 +557,7 @@ export default function ChatWidget() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a question or upload an image..."
+                placeholder="Frage stellen oder Bild hochladen..."
                 rows={1}
                 style={{ fieldSizing: 'content', maxHeight: '4.5rem' } as React.CSSProperties}
                 className="flex-1 resize-none bg-muted rounded-xl px-3 py-2 text-base sm:text-sm outline-none border-0 placeholder:text-muted-foreground/60 overflow-y-auto"

@@ -20,6 +20,8 @@ interface ActionsContextType {
   runningActionId: string | null;
   devMode: boolean;
   setDevMode: (v: boolean) => void;
+  betaMode: boolean;
+  setBetaMode: (v: boolean) => void;
   showActionCode: (action: Action) => void;
   deleteAction: (action: Action) => Promise<void>;
   inputFormAction: Action | null;
@@ -33,6 +35,16 @@ interface ActionsContextType {
 }
 
 const ActionsContext = createContext<ActionsContextType | null>(null);
+
+function readChannelCookie(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.split('; ').some(c => c === 'channel=beta');
+}
+
+function writeChannelCookie(beta: boolean): void {
+  const value = beta ? 'beta' : 'stable';
+  document.cookie = `channel=${value}; path=/; max-age=31536000; SameSite=Lax`;
+}
 
 export function useActions() {
   const ctx = useContext(ActionsContext);
@@ -71,6 +83,15 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem('developer-mode', String(devMode)); } catch {}
   }, [devMode]);
 
+  const [betaMode, setBetaModeState] = useState(() => {
+    try { return readChannelCookie(); } catch { return false; }
+  });
+
+  const setBetaMode = useCallback((v: boolean) => {
+    setBetaModeState(v);
+    try { writeChannelCookie(v); } catch {}
+  }, []);
+
   const refreshActions = useCallback(async () => {
     try {
       const result = await fetchActionsAndFiles();
@@ -95,14 +116,14 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
     const placeholderId = crypto.randomUUID();
     setMessages(prev => [
       ...prev,
-      { id: crypto.randomUUID(), role: 'user', content: `Action: ${action.identifier}` },
-      { id: placeholderId, role: 'assistant', content: 'Working...' },
+      { id: crypto.randomUUID(), role: 'user', content: `Aktion: ${action.identifier}` },
+      { id: placeholderId, role: 'assistant', content: 'In Arbeit...' },
     ]);
 
     executeAction(action.app_id, action.identifier, inputs, files)
       .then(result => {
         const content = result.error
-          ? `Execution failed:\n${result.error}`
+          ? `Fehler bei der Ausführung:\n${result.error}`
           : result.stdout || '(no output)';
         setMessages(prev =>
           prev.map(m => m.id === placeholderId ? { ...m, content } : m)
@@ -112,7 +133,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         setMessages(prev =>
           prev.map(m =>
             m.id === placeholderId
-              ? { ...m, content: `Execution failed: ${err instanceof Error ? err.message : String(err)}` }
+              ? { ...m, content: `Fehler bei der Ausführung: ${err instanceof Error ? err.message : String(err)}` }
               : m,
           )
         );
@@ -144,7 +165,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
       const placeholderId = crypto.randomUUID();
       setMessages(prev => [
         ...prev,
-        { id: placeholderId, role: 'assistant', content: 'Preparing...' },
+        { id: placeholderId, role: 'assistant', content: 'Wird vorbereitet...' },
       ]);
 
       executeAction(action.app_id, action.identifier, {})
@@ -155,7 +176,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
             setRunningActionId(null);
             setMessages(prev => [
               ...prev,
-              { id: crypto.randomUUID(), role: 'assistant', content: `Execution failed:\n${result.error}` },
+              { id: crypto.randomUUID(), role: 'assistant', content: `Fehler bei der Ausführung:\n${result.error}` },
             ]);
             return;
           }
@@ -176,7 +197,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
           setMessages(prev => prev.filter(m => m.id !== placeholderId));
           setMessages(prev => [
             ...prev,
-            { id: crypto.randomUUID(), role: 'assistant', content: `Execution failed: ${err instanceof Error ? err.message : String(err)}` },
+            { id: crypto.randomUUID(), role: 'assistant', content: `Fehler bei der Ausführung: ${err instanceof Error ? err.message : String(err)}` },
           ]);
         })
         .finally(() => {
@@ -204,8 +225,8 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showActionCode = useCallback((action: Action) => {
-    const code = action.value.trim() || '# Empty action';
-    const msg = `**Code for \`${action.identifier}\` in \`${action.app_name}\`:**\n\n\`\`\`python\n${code}\n\`\`\``;
+    const code = action.value.trim() || '# Leere Aktion';
+    const msg = `**Code für \`${action.identifier}\` in \`${action.app_name}\`:**\n\n\`\`\`python\n${code}\n\`\`\``;
     setChatOpen(true);
     setMessages(prev => [
       ...prev,
@@ -214,33 +235,33 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteActionFn = useCallback(async (action: Action) => {
-    const confirmed = window.confirm(`Delete action "${action.identifier}" (from "${action.app_name}")?`);
+    const confirmed = window.confirm(`Aktion löschen "${action.identifier}" (aus "${action.app_name}")?`);
     if (!confirmed) return;
     const result = await deleteActionApi(action.app_id, action.identifier);
     setChatOpen(true);
     if (result.error) {
       setMessages(prev => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: `**Execution failed:** ${result.error}` },
+        { id: crypto.randomUUID(), role: 'assistant', content: `**Fehler bei der Ausführung:** ${result.error}` },
       ]);
     } else {
       setMessages(prev => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: `Action deleted: \`${action.identifier}\` (from \`${action.app_name}\`).` },
+        { id: crypto.randomUUID(), role: 'assistant', content: `Aktion gelöscht: \`${action.identifier}\` (aus \`${action.app_name}\`).` },
       ]);
       await refreshActions();
     }
   }, [refreshActions]);
 
   const deleteAppAttachmentFn = useCallback(async (file: FileAttachment) => {
-    const confirmed = window.confirm(`Delete file "${file.filename}"?`);
+    const confirmed = window.confirm(`Datei löschen "${file.filename}"?`);
     if (!confirmed) return;
     const result = await deleteAppAttachmentApi(file.app_id, file.identifier);
     if (result.error) {
       setChatOpen(true);
       setMessages(prev => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: `**Execution failed:** ${result.error}` },
+        { id: crypto.randomUUID(), role: 'assistant', content: `**Fehler bei der Ausführung:** ${result.error}` },
       ]);
     } else {
       await refreshActions();
@@ -282,7 +303,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
       setMessages(prev =>
         prev.map(m =>
           m.id === assistantId
-            ? { ...m, content: `Execution failed: ${err instanceof Error ? err.message : String(err)}` }
+            ? { ...m, content: `Fehler bei der Ausführung: ${err instanceof Error ? err.message : String(err)}` }
             : m,
         )
       );
@@ -296,7 +317,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
 
   return (
     <ActionsContext.Provider
-      value={{ actions, chatOpen, setChatOpen, messages, chatLoading, runningActionId, runAction, sendMessage, devMode, setDevMode, showActionCode, deleteAction: deleteActionFn, inputFormAction, inputFormOptions, submitActionInputs, cancelInputForm, files, filesByAction, downloadFile, deleteAppAttachment: deleteAppAttachmentFn }}
+      value={{ actions, chatOpen, setChatOpen, messages, chatLoading, runningActionId, runAction, sendMessage, devMode, setDevMode, betaMode, setBetaMode, showActionCode, deleteAction: deleteActionFn, inputFormAction, inputFormOptions, submitActionInputs, cancelInputForm, files, filesByAction, downloadFile, deleteAppAttachment: deleteAppAttachmentFn }}
     >
       {children}
     </ActionsContext.Provider>

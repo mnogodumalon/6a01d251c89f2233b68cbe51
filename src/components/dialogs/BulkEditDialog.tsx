@@ -74,13 +74,13 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
     <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit field for selected records</DialogTitle>
+          <DialogTitle>Feld für ausgewählte Einträge bearbeiten</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>Choose field</Label>
+            <Label>Feld auswählen</Label>
             <Select value={selectedField} onValueChange={handleFieldChange}>
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Auswählen..." /></SelectTrigger>
               <SelectContent>
                 {editableFields.map(f => (
                   <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
@@ -90,14 +90,14 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
           </div>
           {currentField && (
             <div className="space-y-2">
-              <Label>New value</Label>
+              <Label>Neuer Wert</Label>
               {currentField.type === 'bool' ? (
                 <div className="flex items-center gap-2">
                   <Checkbox
                     checked={!!value}
                     onCheckedChange={v => setValue(v)}
                   />
-                  <span className="text-sm">{value ? "Yes" : "No"}</span>
+                  <span className="text-sm">{value ? "Ja" : "Nein"}</span>
                 </div>
               ) : currentField.type === 'string/textarea' ? (
                 <Textarea
@@ -108,6 +108,7 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
               ) : currentField.type === 'number' ? (
                 <Input
                   type="number"
+                  step="any"
                   value={value ?? ''}
                   onChange={e => setValue(e.target.value)}
                 />
@@ -125,7 +126,7 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
                 />
               ) : (currentField.type === 'lookup/select' || currentField.type === 'lookup/radio') && currentField.options ? (
                 <Select value={value ?? ''} onValueChange={v => setValue(v)}>
-                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Auswählen..." /></SelectTrigger>
                   <SelectContent>
                     {currentField.options.map(o => (
                       <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>
@@ -134,7 +135,7 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
                 </Select>
               ) : currentField.type.includes('applookup') && currentField.targetEntity ? (
                 <Select value={value ?? 'none'} onValueChange={v => setValue(v)}>
-                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Auswählen..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
                     {(lookupLists?.[currentField.targetEntity + 'List'] ?? []).map((r: any) => (
@@ -154,9 +155,9 @@ export function BulkEditDialog({ open, onClose, onApply, fields, selectedCount, 
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>Abbrechen</Button>
           <Button onClick={handleApply} disabled={!selectedField || loading}>
-            {loading ? 'Applying...' : `Apply to ${selectedCount} records`}
+            {loading ? 'Wird angewendet...' : `Auf ${selectedCount} Einträge anwenden`}
           </Button>
         </DialogFooter>
       </DialogContent>

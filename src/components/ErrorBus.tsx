@@ -67,7 +67,7 @@ export function useErrorBus(): ErrorBusValue {
 }
 
 async function runRepair(err: ErrorPayload): Promise<void> {
-  const toastId = toast.loading('Starting repair...');
+  const toastId = toast.loading('Reparatur wird gestartet...');
   const errorContext = JSON.stringify({
     type: err.type || 'api_error',
     source: err.source,
@@ -90,7 +90,7 @@ async function runRepair(err: ErrorPayload): Promise<void> {
     });
 
     if (!resp.ok || !resp.body) {
-      toast.error('Automatic repair failed. Please contact support.', { id: toastId });
+      toast.error('Automatische Reparatur fehlgeschlagen. Bitte kontaktieren Sie den Support.', { id: toastId });
       return;
     }
 
@@ -113,21 +113,21 @@ async function runRepair(err: ErrorPayload): Promise<void> {
           toast.loading(content.replace(/^\[STATUS]\s*/, ''), { id: toastId });
         }
         if (content.startsWith('[DONE]')) {
-          toast.success('The issue has been fixed. Please reload the page.', { id: toastId, duration: 12000 });
+          toast.success('Das Problem wurde behoben. Bitte laden Sie die Seite neu.', { id: toastId, duration: 12000 });
           finished = true;
         }
         if (content.startsWith('[ERROR]') && !content.includes('Dashboard-Links')) {
-          toast.error('Automatic repair failed. Please contact support.', { id: toastId });
+          toast.error('Automatische Reparatur fehlgeschlagen. Bitte kontaktieren Sie den Support.', { id: toastId });
           finished = true;
         }
       }
     }
 
     if (!finished) {
-      toast.error('Automatic repair failed. Please contact support.', { id: toastId });
+      toast.error('Automatische Reparatur fehlgeschlagen. Bitte kontaktieren Sie den Support.', { id: toastId });
     }
   } catch {
-    toast.error('Automatic repair failed. Please contact support.', { id: toastId });
+    toast.error('Automatische Reparatur fehlgeschlagen. Bitte kontaktieren Sie den Support.', { id: toastId });
   }
 }
 
@@ -145,10 +145,10 @@ export function ErrorBusProvider({ children }: { children: ReactNode }) {
     if (category === 'user') return;
 
     if (category === 'transient') {
-      toast.error('Network error', {
-        description: err.message || err.detail || 'Lost connection to the server.',
+      toast.error('Netzwerkfehler', {
+        description: err.message || err.detail || 'Verbindung zum Server verloren.',
         action: {
-          label: 'Reload',
+          label: 'Neu laden',
           onClick: () => window.location.reload(),
         },
         duration: TOAST_DURATION_MS,
@@ -156,10 +156,10 @@ export function ErrorBusProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    toast.error('Something went wrong', {
-      description: err.detail || err.message || 'An issue was detected. The dashboard can be repaired automatically.',
+    toast.error('Etwas ist schiefgelaufen', {
+      description: err.detail || err.message || 'Ein Problem wurde entdeckt. Das Dashboard kann automatisch repariert werden.',
       action: {
-        label: 'Repair Dashboard',
+        label: 'Dashboard reparieren',
         onClick: () => { void runRepair(err); },
       },
       duration: TOAST_DURATION_MS,

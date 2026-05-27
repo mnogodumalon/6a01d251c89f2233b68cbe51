@@ -12,12 +12,14 @@
         "aufgabe",
         "format_ausgabe",
         "regeln",
-        "cot_analyse",
-        "generierter_prompt"
+        "generierter_prompt",
+        "prompt_generieren_button",
+        "prompt_copy_button",
+        "prompt_name"
       ],
       "pow": true,
       "pow_difficulty": 50000,
-      "title": "Prompt-Generator Pro — Form"
+      "title": "Prompt-Generator Pro — Formular"
     }
   ]
 }

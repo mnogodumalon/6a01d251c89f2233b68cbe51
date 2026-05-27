@@ -5,8 +5,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { APP_IDS } from '@/types/app';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Badge } from '@/components/ui/badge';
-import { IconPencil } from '@tabler/icons-react';
+import { IconPencil, IconFileText } from '@tabler/icons-react';
 
 interface PromptGeneratorProViewDialogProps {
   open: boolean;
@@ -22,18 +24,26 @@ export function PromptGeneratorProViewDialog({ open, onClose, record, onEdit }: 
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>View Prompt-Generator Pro</DialogTitle>
+          <DialogTitle>Prompt-Generator Pro anzeigen</DialogTitle>
         </DialogHeader>
         <div className="flex justify-end">
           <Button size="sm" onClick={() => { onClose(); onEdit(record); }}>
             <IconPencil className="h-3.5 w-3.5 mr-1.5" />
-            Edit
+            Bearbeiten
           </Button>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Vorlage waehlen</Label>
+            <Label className="text-xs text-muted-foreground">Excel-Datei hochladen</Label>
+            {record.fields.excel_upload ? (
+              <div className="relative w-full rounded-lg bg-muted overflow-hidden border">
+                <img src={record.fields.excel_upload} alt="" className="w-full h-auto object-contain" />
+              </div>
+            ) : <p className="text-sm text-muted-foreground">—</p>}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Vorlage wählen</Label>
             <Badge variant="secondary">{record.fields.vorlage?.label ?? '—'}</Badge>
           </div>
           <div className="space-y-1">
@@ -53,12 +63,43 @@ export function PromptGeneratorProViewDialog({ open, onClose, record, onEdit }: 
             <p className="text-sm whitespace-pre-wrap">{record.fields.format_ausgabe ?? '—'}</p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Regeln & Einschraenkungen</Label>
+            <Label className="text-xs text-muted-foreground">Regeln & Einschränkungen</Label>
             <p className="text-sm whitespace-pre-wrap">{record.fields.regeln ?? '—'}</p>
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Generierter Prompt</Label>
             <p className="text-sm whitespace-pre-wrap">{record.fields.generierter_prompt ?? '—'}</p>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Prompt generieren</Label>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+              record.fields.prompt_generieren_button ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+            }`}>
+              {record.fields.prompt_generieren_button ? 'Ja' : 'Nein'}
+            </span>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Prompt kopieren</Label>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+              record.fields.prompt_copy_button ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+            }`}>
+              {record.fields.prompt_copy_button ? 'Ja' : 'Nein'}
+            </span>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Name des Prompts</Label>
+            <p className="text-sm whitespace-pre-wrap">{record.fields.prompt_name ?? '—'}</p>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Ergebnis hochladen</Label>
+            {record.fields.ergebnis_hochladen ? (
+              <div className="relative w-full rounded-lg bg-muted overflow-hidden border">
+                <img src={record.fields.ergebnis_hochladen} alt="" className="w-full h-auto object-contain" />
+              </div>
+            ) : <p className="text-sm text-muted-foreground">—</p>}
+          </div>
+          <div className="pt-2 border-t border-border">
+            <AttachmentsSection appId={APP_IDS.PROMPT_GENERATOR_PRO} recordId={record.record_id} readOnly />
           </div>
         </div>
       </DialogContent>

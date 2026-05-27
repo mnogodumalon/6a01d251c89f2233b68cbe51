@@ -3,10 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select, SelectContent, SelectItem,
-  SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { lookupKey } from '@/lib/formatters';
 
 // Empty PROXY_BASE → relative URLs (dashboard and form-proxy share the domain).
@@ -85,7 +82,7 @@ export default function PublicFormPromptGeneratorPro() {
     e.preventDefault();
     const token = readCaptchaToken();
     if (!token) {
-      setError('Please wait for the spam check to finish and try again.');
+      setError('Bitte warte auf die Spam-Prüfung und versuche es erneut.');
       return;
     }
     setSubmitting(true);
@@ -94,7 +91,7 @@ export default function PublicFormPromptGeneratorPro() {
       await submitPublicForm(cleanFields(fields), token);
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.');
     } finally {
       setSubmitting(false);
     }
@@ -109,10 +106,10 @@ export default function PublicFormPromptGeneratorPro() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold">Thank you!</h2>
-          <p className="text-muted-foreground">Your submission was received successfully.</p>
+          <h2 className="text-xl font-bold">Vielen Dank!</h2>
+          <p className="text-muted-foreground">Deine Eingabe wurde erfolgreich übermittelt.</p>
           <Button variant="outline" className="mt-4" onClick={() => { setSubmitted(false); setFields({}); }}>
-            Submit another
+            Weitere Eingabe
           </Button>
         </div>
       </div>
@@ -123,30 +120,85 @@ export default function PublicFormPromptGeneratorPro() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Prompt-Generator Pro — Form</h1>
+          <h1 className="text-2xl font-bold text-foreground">Prompt-Generator Pro — Formular</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 bg-card rounded-xl border border-border p-6 shadow-md">
           <div className="space-y-2">
-            <Label htmlFor="vorlage">Vorlage waehlen</Label>
-            <Select
-              value={lookupKey(fields.vorlage) ?? 'none'}
-              onValueChange={v => setFields(f => ({ ...f, vorlage: v === 'none' ? undefined : v as any }))}
-            >
-              <SelectTrigger id="vorlage"><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">—</SelectItem>
-                <SelectItem value="email">Professionelle E-Mail verfassen</SelectItem>
-                <SelectItem value="blogpost">Blogpost-Gliederung erstellen</SelectItem>
-                <SelectItem value="linkedin">Social-Media-Post (LinkedIn)</SelectItem>
-                <SelectItem value="manuell">Manuelle Eingabe</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="vorlage">Vorlage wählen</Label>
+            <div role="radiogroup" className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.vorlage) === 'email'}
+                onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'email' ? undefined : 'email') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.vorlage) === 'email'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                Professionelle E-Mail verfassen
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.vorlage) === 'blogpost'}
+                onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'blogpost' ? undefined : 'blogpost') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.vorlage) === 'blogpost'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                Blogpost-Gliederung erstellen
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.vorlage) === 'linkedin'}
+                onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'linkedin' ? undefined : 'linkedin') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.vorlage) === 'linkedin'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                Social-Media-Post (LinkedIn)
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.vorlage) === 'ein_bild_generieren'}
+                onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'ein_bild_generieren' ? undefined : 'ein_bild_generieren') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.vorlage) === 'ein_bild_generieren'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                Ein Bild generieren
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.vorlage) === 'manuell'}
+                onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'manuell' ? undefined : 'manuell') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.vorlage) === 'manuell'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                Manuelle Eingabe
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="rolle_persona">Rolle / Persona der KI</Label>
             <Textarea
               id="rolle_persona"
+              placeholder=""
               value={fields.rolle_persona ?? ''}
               onChange={e => setFields(f => ({ ...f, rolle_persona: e.target.value }))}
               rows={3}
@@ -156,6 +208,7 @@ export default function PublicFormPromptGeneratorPro() {
             <Label htmlFor="kontext">Kontext / Ausgangssituation</Label>
             <Textarea
               id="kontext"
+              placeholder=""
               value={fields.kontext ?? ''}
               onChange={e => setFields(f => ({ ...f, kontext: e.target.value }))}
               rows={3}
@@ -165,6 +218,7 @@ export default function PublicFormPromptGeneratorPro() {
             <Label htmlFor="aufgabe">Konkrete Aufgabe / Ziel</Label>
             <Textarea
               id="aufgabe"
+              placeholder=""
               value={fields.aufgabe ?? ''}
               onChange={e => setFields(f => ({ ...f, aufgabe: e.target.value }))}
               rows={3}
@@ -174,15 +228,17 @@ export default function PublicFormPromptGeneratorPro() {
             <Label htmlFor="format_ausgabe">Format der Ausgabe</Label>
             <Textarea
               id="format_ausgabe"
+              placeholder=""
               value={fields.format_ausgabe ?? ''}
               onChange={e => setFields(f => ({ ...f, format_ausgabe: e.target.value }))}
               rows={3}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="regeln">Regeln & Einschraenkungen</Label>
+            <Label htmlFor="regeln">Regeln & Einschränkungen</Label>
             <Textarea
               id="regeln"
+              placeholder=""
               value={fields.regeln ?? ''}
               onChange={e => setFields(f => ({ ...f, regeln: e.target.value }))}
               rows={3}
@@ -192,8 +248,41 @@ export default function PublicFormPromptGeneratorPro() {
             <Label htmlFor="generierter_prompt">Generierter Prompt</Label>
             <Textarea
               id="generierter_prompt"
+              placeholder=""
               value={fields.generierter_prompt ?? ''}
               onChange={e => setFields(f => ({ ...f, generierter_prompt: e.target.value }))}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prompt_generieren_button">Prompt generieren</Label>
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="prompt_generieren_button"
+                checked={!!fields.prompt_generieren_button}
+                onCheckedChange={(v) => setFields(f => ({ ...f, prompt_generieren_button: !!v }))}
+              />
+              <Label htmlFor="prompt_generieren_button" className="font-normal">Prompt generieren</Label>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prompt_copy_button">Prompt kopieren</Label>
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="prompt_copy_button"
+                checked={!!fields.prompt_copy_button}
+                onCheckedChange={(v) => setFields(f => ({ ...f, prompt_copy_button: !!v }))}
+              />
+              <Label htmlFor="prompt_copy_button" className="font-normal">Prompt kopieren</Label>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prompt_name">Name des Prompts</Label>
+            <Textarea
+              id="prompt_name"
+              placeholder=""
+              value={fields.prompt_name ?? ''}
+              onChange={e => setFields(f => ({ ...f, prompt_name: e.target.value }))}
               rows={3}
             />
           </div>
@@ -212,7 +301,7 @@ export default function PublicFormPromptGeneratorPro() {
           )}
 
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit'}
+            {submitting ? 'Wird gesendet...' : 'Absenden'}
           </Button>
         </form>
 

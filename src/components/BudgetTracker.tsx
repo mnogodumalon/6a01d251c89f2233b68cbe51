@@ -20,7 +20,7 @@ export function BudgetTracker({ budget, booked, label = 'Budget', showRemaining 
           <span className="font-medium text-muted-foreground">{label}</span>
           <span className="font-semibold">{formatCurrency(booked)}</span>
         </div>
-        <p className="text-xs text-muted-foreground">No budget defined</p>
+        <p className="text-xs text-muted-foreground">Kein Budget definiert</p>
       </div>
     );
   }
@@ -43,14 +43,14 @@ export function BudgetTracker({ budget, booked, label = 'Budget', showRemaining 
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Booked: <span className="font-semibold text-foreground">{formatCurrency(booked)}</span>
+          Gebucht: <span className="font-semibold text-foreground">{formatCurrency(booked)}</span>
         </span>
-        <span>of {formatCurrency(budget)}</span>
+        <span>von {formatCurrency(budget)}</span>
       </div>
 
       {showRemaining && (
         <div className="flex items-center justify-between text-xs pt-1 border-t">
-          <span className="text-muted-foreground">Remaining</span>
+          <span className="text-muted-foreground">Verbleibend</span>
           <span className={`font-semibold ${overBudget ? 'text-red-600' : 'text-green-600'}`}>
             {formatCurrency(remaining)}
           </span>
@@ -58,7 +58,7 @@ export function BudgetTracker({ budget, booked, label = 'Budget', showRemaining 
       )}
 
       {overBudget && (
-        <p className="text-xs text-red-600 font-medium">Over budget!</p>
+        <p className="text-xs text-red-600 font-medium">Budget überschritten!</p>
       )}
     </div>
   );

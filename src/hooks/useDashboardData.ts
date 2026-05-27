@@ -15,7 +15,7 @@ export function useDashboardData() {
       ]);
       setPromptGeneratorPro(promptGeneratorProData);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load data'));
+      setError(err instanceof Error ? err : new Error('Fehler beim Laden der Daten'));
     } finally {
       setLoading(false);
     }

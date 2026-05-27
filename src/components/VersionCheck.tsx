@@ -77,11 +77,11 @@ function rollbackId(d: Deployment): string {
 function deploymentMeta(source: string | undefined): { icon: typeof IconArrowBackUp; colorClass: string; bgClass: string; label: string } {
   switch (source) {
     case 'initial':
-      return { icon: IconSparkles, colorClass: 'text-blue-500', bgClass: 'bg-blue-500/5', label: 'Initial build' };
+      return { icon: IconSparkles, colorClass: 'text-blue-500', bgClass: 'bg-blue-500/5', label: 'Erstversion' };
     case 'update':
-      return { icon: IconRefresh, colorClass: 'text-emerald-500', bgClass: 'bg-emerald-500/5', label: 'Scaffold update' };
+      return { icon: IconRefresh, colorClass: 'text-emerald-500', bgClass: 'bg-emerald-500/5', label: 'Scaffold-Update' };
     case 'agent':
-      return { icon: IconMessageCircle, colorClass: 'text-violet-500', bgClass: 'bg-violet-500/5', label: 'AI edit' };
+      return { icon: IconMessageCircle, colorClass: 'text-violet-500', bgClass: 'bg-violet-500/5', label: 'KI-Änderung' };
     default:
       return { icon: IconArrowBackUp, colorClass: 'text-muted-foreground', bgClass: '', label: '' };
   }
@@ -131,7 +131,7 @@ function ConfirmPrompt({ open, title, description, confirmLabel, onCancel, onCon
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>Abbrechen</Button>
           <Button variant={destructive ? 'destructive' : 'default'} onClick={onConfirm}>
             {confirmLabel}
           </Button>
@@ -254,7 +254,7 @@ export function VersionCheck() {
       const expectedCodebase = receipt.codebase;
       const verified = await waitForVersion(v => v.codebase === expectedCodebase);
       if (!verified) {
-        setStatusMessage('Could not confirm new version. Please reload the page.');
+        setStatusMessage('Version konnte nicht bestätigt werden. Bitte Seite neu laden.');
         setStatus('error');
         return;
       }
@@ -305,7 +305,7 @@ export function VersionCheck() {
       });
 
       if (!verified) {
-        setStatusMessage('Could not confirm new version. Please reload the page.');
+        setStatusMessage('Version konnte nicht bestätigt werden. Bitte Seite neu laden.');
         setStatus('error');
         setRollbackTarget(null);
         return;
@@ -322,10 +322,10 @@ export function VersionCheck() {
 
   if (status === 'updating' || status === 'verifying' || status === 'rolling_back') {
     const label = status === 'updating'
-      ? 'Updating…'
+      ? 'Aktualisiert…'
       : status === 'verifying'
-        ? 'Confirming version…'
-        : 'Reverting…';
+        ? 'Version wird bestätigt…'
+        : 'Wird zurückgesetzt…';
     const Icon = status === 'rolling_back' ? IconHistory : IconRefresh;
     return (
       <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground">
@@ -361,7 +361,7 @@ export function VersionCheck() {
           className="flex items-center gap-2 mx-3 mt-1 px-3 py-1.5 w-[calc(100%-1.5rem)] rounded-lg text-xs font-medium text-[#2563eb] bg-secondary border border-[#bfdbfe] hover:bg-[#dbeafe] transition-colors"
         >
           <IconRefresh size={13} className="shrink-0" />
-          <span>Update available: v{latestVersion}</span>
+          <span>Update verfügbar: v{latestVersion}</span>
         </button>
       )}
 
@@ -394,18 +394,18 @@ export function VersionCheck() {
               className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-[#2563eb] bg-secondary/50 hover:bg-secondary border-b border-sidebar-border transition-colors"
             >
               <IconRefresh size={13} className="shrink-0" />
-              <span>Update available: v{latestVersion}</span>
+              <span>Update verfügbar: v{latestVersion}</span>
             </button>
           )}
 
           {loadingDeployments ? (
             <div className="flex items-center justify-center gap-2 px-3 py-3 text-xs text-muted-foreground">
               <IconLoader size={13} className="animate-spin" />
-              <span>Loading versions...</span>
+              <span>Lade Versionen...</span>
             </div>
           ) : deployments.length === 0 ? (
             <div className="px-3 py-3 text-xs text-muted-foreground text-center">
-              No previous versions
+              Keine früheren Versionen
             </div>
 
           /* ── Ebene 2: Version list for selected branch ── */
@@ -417,7 +417,7 @@ export function VersionCheck() {
                 className="flex items-center gap-1.5 w-full px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border-b border-sidebar-border transition-colors"
               >
                 <IconArrowLeft size={13} className="shrink-0" />
-                {selectedBranch === 'main' ? 'Main line' : 'Alternate direction'}
+                {selectedBranch === 'main' ? 'Hauptlinie' : 'Alternative Richtung'}
               </button>
 
               {/* Version entries */}
@@ -473,7 +473,7 @@ export function VersionCheck() {
                 className="w-full px-3 py-3 text-left hover:bg-sidebar-accent/20 transition-colors border-b border-sidebar-border"
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-foreground">Main line</span>
+                  <span className="text-xs font-semibold text-foreground">Hauptlinie</span>
                   <div className="flex items-center gap-1.5">
                     {liveBranch === 'main' && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-semibold uppercase tracking-wider">live</span>
@@ -494,7 +494,7 @@ export function VersionCheck() {
                   {mainDeps.length > 8 && <span className="text-[9px] text-muted-foreground ml-1">+{mainDeps.length - 8}</span>}
                 </div>
                 <span className="text-[10px] text-muted-foreground">
-                  {mainDeps.length} {mainDeps.length === 1 ? 'version' : 'versions'}
+                  {mainDeps.length} {mainDeps.length === 1 ? 'Version' : 'Versionen'}
                 </span>
               </button>}
 
@@ -512,7 +512,7 @@ export function VersionCheck() {
                       >
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-medium text-foreground">
-                            Alternate direction{altKeys.length > 1 ? ` ${idx + 1}` : ''}
+                            Alternative Richtung{altKeys.length > 1 ? ` ${idx + 1}` : ''}
                           </span>
                           <div className="flex items-center gap-1.5">
                             {hasLive && (
@@ -534,7 +534,7 @@ export function VersionCheck() {
                           {deps.length > 8 && <span className="text-[9px] text-muted-foreground ml-1">+{deps.length - 8}</span>}
                         </div>
                         <span className="text-[10px] text-muted-foreground">
-                          {deps.length} {deps.length === 1 ? 'version' : 'versions'}
+                          {deps.length} {deps.length === 1 ? 'Version' : 'Versionen'}
                         </span>
                       </button>
                     );
@@ -549,24 +549,24 @@ export function VersionCheck() {
 
       {status === 'error' && (
         <div className="mx-3 mt-1 px-3 py-1.5 text-xs text-destructive bg-destructive/10 rounded-lg">
-          {statusMessage || 'An error occurred'}
+          {statusMessage || 'Fehler aufgetreten'}
         </div>
       )}
 
       <ConfirmPrompt
         open={updateDialogOpen}
-        title="Install update?"
-        description="The app will be updated to the latest version. This takes a few minutes."
-        confirmLabel="Update"
+        title="Update installieren?"
+        description="Die Anwendung wird auf die neueste Version aktualisiert. Das dauert einige Minuten."
+        confirmLabel="Aktualisieren"
         onCancel={() => setUpdateDialogOpen(false)}
         onConfirm={performUpdate}
       />
 
       <ConfirmPrompt
         open={rollbackDialog !== null}
-        title="Revert version?"
-        description="The app will be reverted to the selected version."
-        confirmLabel="Revert"
+        title="Version zurücksetzen?"
+        description="Die Anwendung wird auf die ausgewählte Version zurückgesetzt."
+        confirmLabel="Zurücksetzen"
         destructive
         onCancel={() => setRollbackDialog(null)}
         onConfirm={() => rollbackDialog && performRollback(rollbackDialog)}

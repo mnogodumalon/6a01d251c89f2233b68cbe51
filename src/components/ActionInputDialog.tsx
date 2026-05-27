@@ -41,11 +41,11 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
         const prop = schema.properties[key];
         if (prop.format === 'file') {
           if (!fileMap[key]) {
-            setError(`"${prop.title || key}" is required.`);
+            setError(`"${prop.title || key}" ist erforderlich.`);
             return;
           }
         } else if (!values[key] && values[key] !== 0 && values[key] !== false) {
-          setError(`"${prop.title || key}" is required.`);
+          setError(`"${prop.title || key}" ist erforderlich.`);
           return;
         }
       }
@@ -55,7 +55,7 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
     const finalInputs = { ...values };
     for (const [key, file] of Object.entries(fileMap)) {
       if (file.size > MAX_UPLOAD_SIZE) {
-        setError(`"${file.name}": File exceeds the 10 MB limit.`);
+        setError(`"${file.name}": Datei überschreitet das Limit von 10 MB.`);
         return;
       }
       files.push(file);
@@ -74,7 +74,7 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
           onValueChange={v => setValues(prev => ({ ...prev, [key]: v }))}
         >
           <SelectTrigger className="w-full">
-            <span className="truncate"><SelectValue placeholder="Select..." /></span>
+            <span className="truncate"><SelectValue placeholder="Auswählen..." /></span>
           </SelectTrigger>
           <SelectContent className="max-w-[calc(100vw-3rem)]">
             {dynamicOptions.map(opt => (
@@ -92,7 +92,7 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
           onValueChange={v => setValues(prev => ({ ...prev, [key]: v }))}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select..." />
+            <SelectValue placeholder="Auswählen..." />
           </SelectTrigger>
           <SelectContent>
             {prop.enum.map(opt => (
@@ -143,6 +143,7 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
         <Input
           id={key}
           type="number"
+          step="any"
           value={values[key] != null ? String(values[key]) : ''}
           onChange={e => setValues(prev => ({ ...prev, [key]: e.target.value ? Number(e.target.value) : '' }))}
         />
@@ -198,8 +199,8 @@ export function ActionInputDialog({ action, schema, options, onSubmit, onCancel 
           ))}
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button type="submit">Run</Button>
+            <Button type="button" variant="outline" onClick={onCancel}>Abbrechen</Button>
+            <Button type="submit">Ausführen</Button>
           </DialogFooter>
         </form>
       </DialogContent>

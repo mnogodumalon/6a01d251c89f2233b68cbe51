@@ -46,9 +46,9 @@ const STATUS_COLORS: Record<string, string> = {
 export function EntitySelectStep({
   items,
   onSelect,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = 'Suchen...',
   emptyIcon,
-  emptyText = 'No results found.',
+  emptyText = 'Keine Ergebnisse gefunden.',
   createLabel,
   onCreateNew,
   createDialog,
@@ -80,7 +80,7 @@ export function EntitySelectStep({
         {onCreateNew && (
           <Button variant="outline" onClick={onCreateNew} className="shrink-0 gap-1.5">
             <IconPlus size={15} />
-            {createLabel ?? 'Create new'}
+            {createLabel ?? 'Neu erstellen'}
           </Button>
         )}
       </div>
@@ -95,7 +95,7 @@ export function EntitySelectStep({
           {onCreateNew && (
             <Button variant="outline" size="sm" onClick={onCreateNew} className="mt-3 gap-1.5">
               <IconPlus size={14} />
-              {createLabel ?? 'Create new'}
+              {createLabel ?? 'Neu erstellen'}
             </Button>
           )}
         </div>

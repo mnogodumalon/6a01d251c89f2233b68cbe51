@@ -76,11 +76,11 @@ export function IntentWizardShell({
             <IconAlertCircle size={22} className="text-destructive" />
           </div>
           <div className="text-center">
-            <h3 className="font-semibold text-foreground mb-1">Error Loading</h3>
+            <h3 className="font-semibold text-foreground mb-1">Fehler beim Laden</h3>
             <p className="text-sm text-muted-foreground max-w-xs">{error.message}</p>
           </div>
           {onRetry && (
-            <Button variant="outline" size="sm" onClick={onRetry}>Try Again</Button>
+            <Button variant="outline" size="sm" onClick={onRetry}>Erneut versuchen</Button>
           )}
         </div>
       </div>
@@ -93,7 +93,7 @@ export function IntentWizardShell({
       <div>
         <a href="#/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2">
           <IconArrowLeft size={14} className="shrink-0" />
-          Back to Dashboard
+          Zurück zum Dashboard
         </a>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}

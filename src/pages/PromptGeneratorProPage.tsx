@@ -9,7 +9,7 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { IconPencil, IconTrash, IconPlus, IconSearch, IconArrowsUpDown, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import { IconPencil, IconTrash, IconPlus, IconSearch, IconArrowsUpDown, IconArrowUp, IconArrowDown, IconFileText } from '@tabler/icons-react';
 import { PromptGeneratorProDialog } from '@/components/dialogs/PromptGeneratorProDialog';
 import { PromptGeneratorProViewDialog } from '@/components/dialogs/PromptGeneratorProViewDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -101,17 +101,17 @@ export default function PromptGeneratorProPage() {
   return (
     <PageShell
       title="Prompt-Generator Pro"
-      subtitle={`${records.length} Prompt-Generator Pro in the system`}
+      subtitle={`${records.length} Prompt-Generator Pro im System`}
       action={
         <Button onClick={() => setDialogOpen(true)} className="shrink-0 rounded-full shadow-sm">
-          <IconPlus className="h-4 w-4 mr-2" /> Add
+          <IconPlus className="h-4 w-4 mr-2" /> Hinzufügen
         </Button>
       }
     >
       <div className="relative w-full max-w-sm">
         <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search Prompt-Generator Pro..."
+          placeholder="Prompt-Generator Pro suchen..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -121,9 +121,15 @@ export default function PromptGeneratorProPage() {
         <Table className="[&_tbody_td]:px-6 [&_tbody_td]:py-2 [&_tbody_td]:text-base [&_tbody_td]:font-medium [&_tbody_tr:first-child_td]:pt-6 [&_tbody_tr:last-child_td]:pb-10">
           <TableHeader className="bg-secondary">
             <TableRow className="border-b border-input">
+              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('excel_upload')}>
+                <span className="inline-flex items-center gap-1">
+                  Excel-Datei hochladen
+                  {sortKey === 'excel_upload' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
+                </span>
+              </TableHead>
               <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('vorlage')}>
                 <span className="inline-flex items-center gap-1">
-                  Vorlage waehlen
+                  Vorlage wählen
                   {sortKey === 'vorlage' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
                 </span>
               </TableHead>
@@ -153,7 +159,7 @@ export default function PromptGeneratorProPage() {
               </TableHead>
               <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('regeln')}>
                 <span className="inline-flex items-center gap-1">
-                  Regeln & Einschraenkungen
+                  Regeln & Einschränkungen
                   {sortKey === 'regeln' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
                 </span>
               </TableHead>
@@ -163,12 +169,37 @@ export default function PromptGeneratorProPage() {
                   {sortKey === 'generierter_prompt' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
                 </span>
               </TableHead>
-              <TableHead className="w-24 uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6">Actions</TableHead>
+              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('prompt_generieren_button')}>
+                <span className="inline-flex items-center gap-1">
+                  Prompt generieren
+                  {sortKey === 'prompt_generieren_button' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
+                </span>
+              </TableHead>
+              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('prompt_copy_button')}>
+                <span className="inline-flex items-center gap-1">
+                  Prompt kopieren
+                  {sortKey === 'prompt_copy_button' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
+                </span>
+              </TableHead>
+              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('prompt_name')}>
+                <span className="inline-flex items-center gap-1">
+                  Name des Prompts
+                  {sortKey === 'prompt_name' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
+                </span>
+              </TableHead>
+              <TableHead className="uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('ergebnis_hochladen')}>
+                <span className="inline-flex items-center gap-1">
+                  Ergebnis hochladen
+                  {sortKey === 'ergebnis_hochladen' ? (sortDir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} />) : <IconArrowsUpDown size={14} className="opacity-30" />}
+                </span>
+              </TableHead>
+              <TableHead className="w-24 uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortRecords(filtered).map(record => (
               <TableRow key={record.record_id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={(e) => { if ((e.target as HTMLElement).closest('button, [role="checkbox"]')) return; setViewingRecord(record); }}>
+                <TableCell>{record.fields.excel_upload ? <div className="relative h-8 w-8 rounded bg-muted overflow-hidden"><div className="absolute inset-0 flex items-center justify-center"><IconFileText size={14} className="text-muted-foreground" /></div><img src={record.fields.excel_upload} alt="" className="relative h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /></div> : '—'}</TableCell>
                 <TableCell><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{record.fields.vorlage?.label ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.rolle_persona ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.kontext ?? '—'}</span></TableCell>
@@ -176,6 +207,10 @@ export default function PromptGeneratorProPage() {
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.format_ausgabe ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.regeln ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.generierter_prompt ?? '—'}</span></TableCell>
+                <TableCell><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${record.fields.prompt_generieren_button ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{record.fields.prompt_generieren_button ? 'Ja' : 'Nein'}</span></TableCell>
+                <TableCell><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${record.fields.prompt_copy_button ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{record.fields.prompt_copy_button ? 'Ja' : 'Nein'}</span></TableCell>
+                <TableCell className="max-w-xs"><span className="truncate block">{record.fields.prompt_name ?? '—'}</span></TableCell>
+                <TableCell>{record.fields.ergebnis_hochladen ? <div className="relative h-8 w-8 rounded bg-muted overflow-hidden"><div className="absolute inset-0 flex items-center justify-center"><IconFileText size={14} className="text-muted-foreground" /></div><img src={record.fields.ergebnis_hochladen} alt="" className="relative h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /></div> : '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setEditingRecord(record)}>
@@ -190,8 +225,8 @@ export default function PromptGeneratorProPage() {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-16 text-muted-foreground">
-                  {search ? 'No results found.' : 'No Prompt-Generator Pro yet. Add one!'}
+                <TableCell colSpan={13} className="text-center py-16 text-muted-foreground">
+                  {search ? 'Keine Ergebnisse gefunden.' : 'Noch keine Prompt-Generator Pro. Jetzt hinzufügen!'}
                 </TableCell>
               </TableRow>
             )}
@@ -204,6 +239,7 @@ export default function PromptGeneratorProPage() {
         onClose={() => { setDialogOpen(false); setEditingRecord(null); }}
         onSubmit={editingRecord ? handleUpdate : handleCreate}
         defaultValues={editingRecord?.fields}
+        recordId={editingRecord?.record_id}
         enablePhotoScan={AI_PHOTO_SCAN['PromptGeneratorPro']}
         enablePhotoLocation={AI_PHOTO_LOCATION['PromptGeneratorPro']}
       />
@@ -212,8 +248,8 @@ export default function PromptGeneratorProPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete Prompt-Generator Pro"
-        description="Are you sure? This action cannot be undone."
+        title="Prompt-Generator Pro löschen"
+        description="Soll dieser Eintrag wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden."
       />
 
       <PromptGeneratorProViewDialog

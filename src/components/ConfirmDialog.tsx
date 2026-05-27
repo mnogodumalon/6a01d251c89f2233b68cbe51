@@ -25,8 +25,8 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, description }: 
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
+          <Button variant="outline" onClick={onClose}>Abbrechen</Button>
+          <Button variant="destructive" onClick={onConfirm}>Löschen</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

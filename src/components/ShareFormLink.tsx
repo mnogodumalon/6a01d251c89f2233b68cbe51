@@ -44,7 +44,7 @@ export function ShareFormLink({ appId, label, prefill, variant = 'button', class
       <button
         onClick={handleCopy}
         className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-accent'} ${className}`}
-        title={copied ? 'Link copied!' : (label ?? 'Share link')}
+        title={copied ? 'Link kopiert!' : (label ?? 'Link teilen')}
       >
         {copied ? <IconCheck size={16} /> : <IconLink size={16} />}
       </button>
@@ -58,7 +58,7 @@ export function ShareFormLink({ appId, label, prefill, variant = 'button', class
         className={`inline-flex items-center gap-1.5 text-sm text-primary hover:underline ${className}`}
       >
         {copied ? <IconCheck size={14} /> : <IconLink size={14} />}
-        {copied ? 'Link copied!' : (label ?? 'Share link')}
+        {copied ? 'Link kopiert!' : (label ?? 'Link teilen')}
       </button>
     );
   }
@@ -69,7 +69,7 @@ export function ShareFormLink({ appId, label, prefill, variant = 'button', class
       className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-border bg-card hover:bg-accent transition-colors ${className}`}
     >
       {copied ? <IconCheck size={16} className="text-primary" /> : <IconLink size={16} />}
-      {copied ? 'Link copied!' : (label ?? 'Share link')}
+      {copied ? 'Link kopiert!' : (label ?? 'Link teilen')}
     </button>
   );
 }

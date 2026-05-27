@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import ChatWidget from '@/components/ChatWidget';
 import { ActionInputDialog } from '@/components/ActionInputDialog';
 import { TopBar } from '@/components/TopBar';
-import ActionsBar from '@/components/ActionsBar';
+import { ActionsSidebar } from '@/components/ActionsSidebar';
 import { useActions } from '@/context/ActionsContext';
 import { Button } from '@/components/ui/button';
 import { VersionCheck } from '@/components/VersionCheck';
@@ -73,9 +73,11 @@ export function Layout() {
             className="flex items-center gap-2 px-4 py-2 rounded-2xl text-base transition-colors min-w-0 text-sidebar-foreground font-normal hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
           >
             <IconArrowBackUp size={16} className="shrink-0" />
-            <span className="truncate">Back</span>
+            <span className="truncate">Zurück</span>
           </a>
         </nav>
+
+        <ActionsSidebar />
 
         <div className="mt-auto px-3 pb-4">
           <div className="border-t border-sidebar-border pt-3">
@@ -88,18 +90,17 @@ export function Layout() {
 
       <div className={IS_EMBED ? "" : "lg:pl-72"} style={IS_EMBED ? undefined : { paddingTop: 'var(--topbar-h)' }}>
         <main className={`max-w-screen-2xl ${IS_EMBED ? "p-2 lg:p-4" : "p-6 lg:p-8"}`}>
-          {!IS_EMBED && !authError && <ActionsBar />}
           {authError ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
                 <IconAlertCircle size={22} className="text-destructive" />
               </div>
               <div className="text-center">
-                <h3 className="font-semibold text-foreground mb-1">You are not logged in.</h3>
+                <h3 className="font-semibold text-foreground mb-1">Du bist nicht angemeldet.</h3>
               </div>
               <Button variant="outline" size="sm" onClick={() => {
                 window.location.href = `${window.location.origin}/login.htm?cugCoUrl=${encodeURIComponent(window.location.href)}`;
-              }}>Log in</Button>
+              }}>Anmelden</Button>
             </div>
           ) : (
             <Outlet />
@@ -107,7 +108,7 @@ export function Layout() {
         </main>
       </div>
 
-      {!IS_EMBED && <ChatWidget />}
+      <ChatWidget />
 
       {inputFormAction && inputFormAction.metadata?.input_schema && (
         <ActionInputDialog

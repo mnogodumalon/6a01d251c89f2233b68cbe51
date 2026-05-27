@@ -3,6 +3,7 @@ import { IconPlayerPlay, IconCode, IconTrash, IconFile, IconFileTypePdf, IconPho
 import { useActions } from '@/context/ActionsContext';
 import type { Action, FileAttachment } from '@/lib/actions-agent';
 import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 function FileIcon({ mimeType }: { mimeType: string }) {
   if (mimeType === 'application/pdf') return <IconFileTypePdf size={14} className="shrink-0 text-red-500" />;
@@ -12,13 +13,13 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 
 function formatDateTime(d?: string) {
   if (!d) return '';
-  try { return format(parseISO(d), 'MMM d, yyyy, h:mm a'); } catch { return d; }
+  try { return format(parseISO(d), 'dd.MM.yyyy, HH:mm', { locale: de }); } catch { return d; }
 }
 
 type FileSortMode = 'newest' | 'oldest' | 'az' | 'za';
 const FILE_SORT_LABELS: Record<FileSortMode, string> = {
-  newest: 'Newest first',
-  oldest: 'Oldest first',
+  newest: 'Neuste zuerst',
+  oldest: 'Älteste zuerst',
   az: 'Name A→Z',
   za: 'Name Z→A',
 };
@@ -117,12 +118,12 @@ function FileList({ files, onDownload, onDelete }: { files: FileAttachment[]; on
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                       <IconDownload size={13} />
-                      Download
+                      Herunterladen
                     </button>
                     <button
                       onClick={() => onDelete(f)}
                       className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-                      title="Delete"
+                      title="Löschen"
                     >
                       <IconTrash size={14} />
                     </button>
@@ -204,13 +205,13 @@ function ActionWidget({ action, files, onRun, onShowCode, onDelete, onDownload, 
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
               >
                 {running ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlayerPlay size={14} />}
-                {running ? 'Working...' : 'Run'}
+                {running ? 'In Arbeit...' : 'Ausführen'}
               </button>
               {devMode && (
                 <button
                   onClick={() => onShowCode(action)}
                   className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-primary/10 text-primary transition-colors"
-                  title="Source Code"
+                  title="Quellcode"
                 >
                   <IconCode size={16} />
                 </button>
@@ -218,7 +219,7 @@ function ActionWidget({ action, files, onRun, onShowCode, onDelete, onDownload, 
               <button
                 onClick={() => { void onDelete(action); }}
                 className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-                title="Delete"
+                title="Löschen"
               >
                 <IconTrash size={16} />
               </button>
@@ -299,7 +300,7 @@ export default function ActionsBar() {
           files={unassignedFiles}
           onDownload={(url, filename) => { void downloadFile(url, filename); }}
           onDeleteFile={(f) => { void deleteAppAttachment(f); }}
-          label="Files"
+          label="Dateien"
         />
       )}
     </div>

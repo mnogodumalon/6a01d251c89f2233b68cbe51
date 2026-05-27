@@ -1,13 +1,14 @@
 import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export function formatDate(s: string | undefined) {
   if (!s) return '—';
-  try { return format(parseISO(s), 'MMM d, yyyy'); } catch { return s; }
+  try { return format(parseISO(s), 'dd.MM.yyyy', { locale: de }); } catch { return s; }
 }
 
 export function formatCurrency(v: number | undefined) {
   if (v == null) return '—';
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(v);
 }
 
 /** Extract display label from lookup/select or lookup/radio API response */

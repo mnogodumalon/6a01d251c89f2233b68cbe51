@@ -39,14 +39,14 @@ const APPS_PER_PAGE = 12;
 
 type SortMode = 'newest' | 'oldest' | 'az' | 'za';
 const SORT_LABELS: Record<SortMode, string> = {
-  newest: 'Newest first',
-  oldest: 'Oldest first',
+  newest: 'Neuste zuerst',
+  oldest: 'Älteste zuerst',
   az: 'Name, A → Z',
   za: 'Name, Z → A',
 };
 
 export function TopBar() {
-  const { devMode, setDevMode } = useActions();
+  const { devMode, setDevMode, betaMode, setBetaMode } = useActions();
   const [profile, setProfile] = useState<HeaderProfile | null>(null);
   const [appGroups, setAppGroups] = useState<AppGroupInfo[]>([]);
   const [appsOpen, setAppsOpen] = useState(false);
@@ -139,7 +139,7 @@ export function TopBar() {
               <div className="flex-1 h-9 flex items-center justify-between px-4 py-0.5 bg-white rounded-[27px] shadow-[0px_0px_4px_0px_rgba(155,155,155,0.5)]">
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Suche..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="flex-1 bg-transparent text-base outline-none placeholder:text-[#d9d9d9] min-w-0"
@@ -193,7 +193,7 @@ export function TopBar() {
                         <AppsIcon size={20} className="text-white/70" />
                       </div>
                     )}
-                    <span lang="en" className="text-xs text-[#767676] text-center w-full line-clamp-2 leading-tight" style={{hyphens: 'auto'}}>{g.name}</span>
+                    <span lang="de" className="text-xs text-[#767676] text-center w-full line-clamp-2 leading-tight" style={{hyphens: 'auto'}}>{g.name}</span>
                   </a>
                 ))}
                 {/* Create New App */}
@@ -206,12 +206,12 @@ export function TopBar() {
                       <IconPlus size={24} className="text-[#d14600]" />
                     </div>
                   </div>
-                  <span className="col-span-3 text-base text-[#374151]">Create New App</span>
+                  <span className="col-span-3 text-base text-[#374151]">Neue App erstellen</span>
                 </a>
               </div>
             ) : (
               <div className="flex items-center justify-center py-8 text-sm text-[#767676]">
-                No apps found
+                Keine Apps gefunden
               </div>
             )}
 
@@ -226,7 +226,7 @@ export function TopBar() {
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
                 <span>{page + 1}</span>
-                <span>of</span>
+                <span>von</span>
                 <span>{totalPages}</span>
                 <button
                   onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
@@ -245,7 +245,7 @@ export function TopBar() {
                 className="flex items-center gap-2 px-2 py-2 rounded-2xl text-base text-[#374151] hover:bg-accent/50 transition-colors"
               >
                 <IconFlask size={20} className="text-[#374151] shrink-0" />
-                <span>Klar Lab (Beta Features)</span>
+                <span>Klar Lab</span>
               </a>
             </div>
           </div>
@@ -265,7 +265,7 @@ export function TopBar() {
               {initials}
             </div>
           )}
-          <span className="text-xs text-[#767676] hidden lg:block">Profile</span>
+          <span className="text-xs text-[#767676] hidden lg:block">Profil</span>
         </button>
         {profileOpen && profile && (
           <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-border p-4 z-50">
@@ -291,7 +291,16 @@ export function TopBar() {
                   onChange={e => setDevMode(e.target.checked)}
                   className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-foreground">Developer</span>
+                <span className="text-sm text-foreground">Entwickler</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer mt-2">
+                <input
+                  type="checkbox"
+                  checked={betaMode}
+                  onChange={e => setBetaMode(e.target.checked)}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-foreground">Beta Features</span>
               </label>
             </div>
           </div>

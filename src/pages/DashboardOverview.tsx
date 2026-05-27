@@ -426,6 +426,7 @@ export default function DashboardOverview() {
         onClose={() => { setDialogOpen(false); setEditRecord(null); }}
         onSubmit={editRecord ? handleUpdate : handleCreate}
         defaultValues={editRecord?.fields}
+        recordId={editRecord?.record_id}
         enablePhotoScan={AI_PHOTO_SCAN['PromptGeneratorPro']}
         enablePhotoLocation={AI_PHOTO_LOCATION['PromptGeneratorPro']}
       />

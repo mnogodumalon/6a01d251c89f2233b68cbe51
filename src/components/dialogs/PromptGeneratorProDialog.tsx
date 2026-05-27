@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { PromptGeneratorPro } from '@/types/app';
 import { APP_IDS } from '@/types/app';
-import { extractRecordId, createRecordUrl, cleanFieldsForApi, getUserProfile } from '@/services/livingAppsService';
+import { extractRecordId, createRecordUrl, cleanFieldsForApi, uploadFile, getUserProfile } from '@/services/livingAppsService';
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogFooter,
@@ -9,14 +9,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { ComputedContext } from '@/config/form-enhancements/types';
+import { applyFieldOrder, flattenFieldOrder, applyDefaults, evalComputed, numberInputProps, clampNumberValue, classifyComputed, extractApplookupRefs, mergeApplookupRefs, resolveApplookupRef } from '@/config/form-enhancements/types';
+import { formEnhancements, computedDeps, computedApplookupRefs } from '@/config/form-enhancements/PromptGeneratorPro';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select, SelectContent, SelectItem,
-  SelectTrigger, SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconArrowBigDownLinesFilled, IconCamera, IconCircleCheck, IconClipboard, IconFileText, IconLoader2, IconPhotoPlus, IconSparkles, IconUpload, IconX } from '@tabler/icons-react';
-import { fileToDataUri, extractFromInput, extractPhotoMeta, reverseGeocode } from '@/lib/ai';
+import { IconCamera, IconChevronDown, IconCircleCheck, IconClipboard, IconFileText, IconLoader2, IconPhotoPlus, IconSparkles, IconUpload, IconX } from '@tabler/icons-react';
+import { fileToDataUri, extractFromInput, extractPhotoMeta, reverseGeocode, dataUriToBlob } from '@/lib/ai';
 import { lookupKey } from '@/lib/formatters';
 
 interface PromptGeneratorProDialogProps {
@@ -24,13 +24,27 @@ interface PromptGeneratorProDialogProps {
   onClose: () => void;
   onSubmit: (fields: PromptGeneratorPro['fields']) => Promise<void>;
   defaultValues?: PromptGeneratorPro['fields'];
+  /** Record id when editing — enables the attachments section. Omit on create. */
+  recordId?: string;
   enablePhotoScan?: boolean;
   enablePhotoLocation?: boolean;
 }
 
-export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValues, enablePhotoScan = true, enablePhotoLocation = true }: PromptGeneratorProDialogProps) {
+export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValues, recordId, enablePhotoScan = true, enablePhotoLocation = true }: PromptGeneratorProDialogProps) {
   const [fields, setFields] = useState<Partial<PromptGeneratorPro['fields']>>({});
   const [saving, setSaving] = useState(false);
+  // Dirty-tracking: in edit-mode the Speichern button is disabled until the
+  // user actually changes something. JSON.stringify is good enough for our
+  // fields (plain values + LookupValue objects + string arrays).
+  const isDirty = useMemo(() => {
+    if (!defaultValues) return true;  // create-mode: always allow submit
+    try {
+      return JSON.stringify(fields) !== JSON.stringify(defaultValues);
+    } catch {
+      return true;
+    }
+  }, [fields, defaultValues]);
+  const [aiOpen, setAiOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -45,9 +59,41 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
   const [profileLoading, setProfileLoading] = useState(false);
   const [aiText, setAiText] = useState('');
 
+  // Computed-field plumbing. Pure no-op when formEnhancements.computed is {}.
+  // The number renderer uses computedValues only as a fallback when the user
+  // hasn't typed anything — clearing the input always restores the computation.
+  // computedContext exposes applookup list props so { kind: 'applookup', ... }
+  // operands can resolve to numeric fields on the target record.
+  const computedContext = useMemo<ComputedContext>(() => ({
+    lookupLists: {
+    },
+  }), []);
+  const computedValues = useMemo<Record<string, number | null>>(() => {
+    let out: Record<string, number | null> = {};
+    const entries = Object.entries(formEnhancements.computed);
+    for (let i = 0; i < 5; i++) {
+      const merged: Record<string, unknown> = { ...(fields as Record<string, unknown>) };
+      for (const [k, v] of Object.entries(out)) {
+        if (v === null) continue;
+        const cur = merged[k];
+        if (cur === undefined || cur === null || cur === '') merged[k] = v;
+      }
+      const next: Record<string, number | null> = {};
+      let changed = false;
+      for (const [key, spec] of entries) {
+        const v = evalComputed(spec, merged, computedContext);
+        next[key] = v;
+        if (v !== out[key]) changed = true;
+      }
+      out = next;
+      if (!changed) break;
+    }
+    return out;
+  }, [fields, computedContext]);
+
   useEffect(() => {
     if (open) {
-      setFields(defaultValues ?? {});
+      setFields(applyDefaults((defaultValues ?? {}) as Record<string, unknown>, formEnhancements.defaults) as Partial<PromptGeneratorPro['fields']>);
       setPreview(null);
       setScanSuccess(false);
       setAiText('');
@@ -74,7 +120,21 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
     e.preventDefault();
     setSaving(true);
     try {
-      const clean = cleanFieldsForApi({ ...fields }, 'prompt_generator_pro');
+      // Fill empty number slots from computed values; user-typed values always win.
+      // CRITICAL: only backend-mapped keys may be backfilled. Virtual computeds
+      // (sub-agent invents `_netto`, `_bestellung_gesamtbetrag` etc. for the
+      // "Berechnungen" display) have no backend counterpart — writing them
+      // triggers a 422 from the Living-Apps API ("field does not exist").
+      const merged = { ...fields };
+      for (const [key, val] of Object.entries(computedValues)) {
+        if (val === null) continue;
+        if (!backendFieldSet.has(key)) continue;
+        const cur = (merged as Record<string, unknown>)[key];
+        if (cur === undefined || cur === null || cur === '') {
+          (merged as Record<string, unknown>)[key] = val;
+        }
+      }
+      const clean = cleanFieldsForApi(merged, 'prompt_generator_pro');
       await onSubmit(clean as PromptGeneratorPro['fields']);
       onClose();
     } finally {
@@ -118,7 +178,7 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
         }
       }
       const photoContext = contextParts.length ? contextParts.join('\n') : undefined;
-      const schema = `{\n  "vorlage": LookupValue | null, // Vorlage waehlen (select one key: "email" | "blogpost" | "linkedin" | "manuell") mapping: email=Professionelle E-Mail verfassen, blogpost=Blogpost-Gliederung erstellen, linkedin=Social-Media-Post (LinkedIn), manuell=Manuelle Eingabe\n  "rolle_persona": string | null, // Rolle / Persona der KI\n  "kontext": string | null, // Kontext / Ausgangssituation\n  "aufgabe": string | null, // Konkrete Aufgabe / Ziel\n  "format_ausgabe": string | null, // Format der Ausgabe\n  "regeln": string | null, // Regeln & Einschraenkungen\n  "generierter_prompt": string | null, // Generierter Prompt\n}`;
+      const schema = `{\n  "vorlage": LookupValue | null, // Vorlage wählen (select one key: "email" | "blogpost" | "linkedin" | "ein_bild_generieren" | "manuell") mapping: email=Professionelle E-Mail verfassen, blogpost=Blogpost-Gliederung erstellen, linkedin=Social-Media-Post (LinkedIn), ein_bild_generieren=Ein Bild generieren, manuell=Manuelle Eingabe\n  "rolle_persona": string | null, // Rolle / Persona der KI\n  "kontext": string | null, // Kontext / Ausgangssituation\n  "aufgabe": string | null, // Konkrete Aufgabe / Ziel\n  "format_ausgabe": string | null, // Format der Ausgabe\n  "regeln": string | null, // Regeln & Einschränkungen\n  "generierter_prompt": string | null, // Generierter Prompt\n  "prompt_generieren_button": boolean | null, // Prompt generieren\n  "prompt_copy_button": boolean | null, // Prompt kopieren\n  "prompt_name": string | null, // Name des Prompts\n}`;
       const raw = await extractFromInput<Record<string, unknown>>(schema, {
         dataUri: uri,
         userText: aiText.trim() || undefined,
@@ -136,11 +196,22 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
         }
         return merged as Partial<PromptGeneratorPro['fields']>;
       });
+      // Upload scanned file to file fields
+      if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+        try {
+          const blob = dataUriToBlob(uri!);
+          const fileUrl = await uploadFile(blob, file.name);
+          setFields(prev => ({ ...prev, excel_upload: fileUrl }));
+          setFields(prev => ({ ...prev, ergebnis_hochladen: fileUrl }));
+        } catch (uploadErr) {
+          console.error('File upload failed:', uploadErr);
+        }
+      }
       setAiText('');
       setScanSuccess(true);
       setTimeout(() => setScanSuccess(false), 3000);
     } catch (err) {
-      console.error('Scan failed:', err);
+      console.error('Scan fehlgeschlagen:', err);
       alert(err instanceof Error ? err.message : String(err));
     } finally {
       setScanning(false);
@@ -175,24 +246,432 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
     }
   }, []);
 
-  const DIALOG_INTENT = defaultValues ? 'Edit Prompt-Generator Pro' : 'New Prompt-Generator Pro';
+  const DIALOG_INTENT = defaultValues ? 'Prompt-Generator Pro bearbeiten' : 'Prompt-Generator Pro hinzufügen';
+
+  const fieldBlocks: Record<string, React.ReactNode> = {
+    'excel_upload': (
+      <div key="excel_upload" className="space-y-1.5">
+        <Label htmlFor="excel_upload">Excel-Datei hochladen</Label>
+        {fields.excel_upload ? (
+          <div className="flex items-center gap-3 rounded-lg border p-2">
+            <div className="relative h-14 w-14 shrink-0 rounded-md bg-muted overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <IconFileText size={20} className="text-muted-foreground" />
+              </div>
+              <img
+                src={fields.excel_upload}
+                alt=""
+                className="relative h-full w-full object-cover"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate text-foreground">{fields.excel_upload.split("/").pop()}</p>
+              <div className="flex gap-2 mt-1">
+                <label
+                  className="text-xs text-primary hover:underline cursor-pointer"
+                >
+                  Ändern
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const fileUrl = await uploadFile(file, file.name);
+                        setFields(f => ({ ...f, excel_upload: fileUrl }));
+                      } catch (err) { console.error('Upload failed:', err); }
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                  onClick={() => setFields(f => ({ ...f, excel_upload: undefined }))}
+                >
+                  Entfernen
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <label
+            className="flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-muted-foreground/25 p-4 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+          >
+            <IconUpload size={20} className="text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Datei hochladen</span>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const fileUrl = await uploadFile(file, file.name);
+                  setFields(f => ({ ...f, excel_upload: fileUrl }));
+                } catch (err) { console.error('Upload failed:', err); }
+              }}
+            />
+          </label>
+        )}
+      </div>
+    ),
+    'vorlage': (
+      <div key="vorlage" className="space-y-1.5">
+        <Label htmlFor="vorlage">Vorlage wählen</Label>
+        <div role="radiogroup" className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.vorlage) === 'email'}
+            onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'email' ? undefined : 'email') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.vorlage) === 'email'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            Professionelle E-Mail verfassen
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.vorlage) === 'blogpost'}
+            onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'blogpost' ? undefined : 'blogpost') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.vorlage) === 'blogpost'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            Blogpost-Gliederung erstellen
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.vorlage) === 'linkedin'}
+            onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'linkedin' ? undefined : 'linkedin') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.vorlage) === 'linkedin'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            Social-Media-Post (LinkedIn)
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.vorlage) === 'ein_bild_generieren'}
+            onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'ein_bild_generieren' ? undefined : 'ein_bild_generieren') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.vorlage) === 'ein_bild_generieren'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            Ein Bild generieren
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.vorlage) === 'manuell'}
+            onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'manuell' ? undefined : 'manuell') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.vorlage) === 'manuell'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            Manuelle Eingabe
+          </button>
+        </div>
+      </div>
+    ),
+    'rolle_persona': (
+      <div key="rolle_persona" className="space-y-1.5">
+        <Label htmlFor="rolle_persona">Rolle / Persona der KI</Label>
+        <Textarea
+          id="rolle_persona"
+          placeholder=""
+          value={fields.rolle_persona ?? ''}
+          onChange={e => setFields(f => ({ ...f, rolle_persona: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'kontext': (
+      <div key="kontext" className="space-y-1.5">
+        <Label htmlFor="kontext">Kontext / Ausgangssituation</Label>
+        <Textarea
+          id="kontext"
+          placeholder=""
+          value={fields.kontext ?? ''}
+          onChange={e => setFields(f => ({ ...f, kontext: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'aufgabe': (
+      <div key="aufgabe" className="space-y-1.5">
+        <Label htmlFor="aufgabe">Konkrete Aufgabe / Ziel</Label>
+        <Textarea
+          id="aufgabe"
+          placeholder=""
+          value={fields.aufgabe ?? ''}
+          onChange={e => setFields(f => ({ ...f, aufgabe: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'format_ausgabe': (
+      <div key="format_ausgabe" className="space-y-1.5">
+        <Label htmlFor="format_ausgabe">Format der Ausgabe</Label>
+        <Textarea
+          id="format_ausgabe"
+          placeholder=""
+          value={fields.format_ausgabe ?? ''}
+          onChange={e => setFields(f => ({ ...f, format_ausgabe: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'regeln': (
+      <div key="regeln" className="space-y-1.5">
+        <Label htmlFor="regeln">Regeln & Einschränkungen</Label>
+        <Textarea
+          id="regeln"
+          placeholder=""
+          value={fields.regeln ?? ''}
+          onChange={e => setFields(f => ({ ...f, regeln: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'generierter_prompt': (
+      <div key="generierter_prompt" className="space-y-1.5">
+        <Label htmlFor="generierter_prompt">Generierter Prompt</Label>
+        <Textarea
+          id="generierter_prompt"
+          placeholder=""
+          value={fields.generierter_prompt ?? ''}
+          onChange={e => setFields(f => ({ ...f, generierter_prompt: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'prompt_generieren_button': (
+      <div key="prompt_generieren_button" className="space-y-1.5">
+        <Label htmlFor="prompt_generieren_button">Prompt generieren</Label>
+        <div className="flex items-center gap-2 pt-1">
+          <Checkbox
+            id="prompt_generieren_button"
+            checked={!!fields.prompt_generieren_button}
+            onCheckedChange={(v) => setFields(f => ({ ...f, prompt_generieren_button: !!v }))}
+          />
+          <Label htmlFor="prompt_generieren_button" className="font-normal">Prompt generieren</Label>
+        </div>
+      </div>
+    ),
+    'prompt_copy_button': (
+      <div key="prompt_copy_button" className="space-y-1.5">
+        <Label htmlFor="prompt_copy_button">Prompt kopieren</Label>
+        <div className="flex items-center gap-2 pt-1">
+          <Checkbox
+            id="prompt_copy_button"
+            checked={!!fields.prompt_copy_button}
+            onCheckedChange={(v) => setFields(f => ({ ...f, prompt_copy_button: !!v }))}
+          />
+          <Label htmlFor="prompt_copy_button" className="font-normal">Prompt kopieren</Label>
+        </div>
+      </div>
+    ),
+    'prompt_name': (
+      <div key="prompt_name" className="space-y-1.5">
+        <Label htmlFor="prompt_name">Name des Prompts</Label>
+        <Textarea
+          id="prompt_name"
+          placeholder=""
+          value={fields.prompt_name ?? ''}
+          onChange={e => setFields(f => ({ ...f, prompt_name: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    ),
+    'ergebnis_hochladen': (
+      <div key="ergebnis_hochladen" className="space-y-1.5">
+        <Label htmlFor="ergebnis_hochladen">Ergebnis hochladen</Label>
+        {fields.ergebnis_hochladen ? (
+          <div className="flex items-center gap-3 rounded-lg border p-2">
+            <div className="relative h-14 w-14 shrink-0 rounded-md bg-muted overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <IconFileText size={20} className="text-muted-foreground" />
+              </div>
+              <img
+                src={fields.ergebnis_hochladen}
+                alt=""
+                className="relative h-full w-full object-cover"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate text-foreground">{fields.ergebnis_hochladen.split("/").pop()}</p>
+              <div className="flex gap-2 mt-1">
+                <label
+                  className="text-xs text-primary hover:underline cursor-pointer"
+                >
+                  Ändern
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const fileUrl = await uploadFile(file, file.name);
+                        setFields(f => ({ ...f, ergebnis_hochladen: fileUrl }));
+                      } catch (err) { console.error('Upload failed:', err); }
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                  onClick={() => setFields(f => ({ ...f, ergebnis_hochladen: undefined }))}
+                >
+                  Entfernen
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <label
+            className="flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-muted-foreground/25 p-4 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+          >
+            <IconUpload size={20} className="text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Datei hochladen</span>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const fileUrl = await uploadFile(file, file.name);
+                  setFields(f => ({ ...f, ergebnis_hochladen: fileUrl }));
+                } catch (err) { console.error('Upload failed:', err); }
+              }}
+            />
+          </label>
+        )}
+      </div>
+    ),
+  };
+  const orderedFields = applyFieldOrder(Object.keys(fieldBlocks), formEnhancements.fieldOrder);
+  const orderedFieldsKey = orderedFields.map((it) => typeof it === 'string' ? it : it.row.join('+')).join(',');
+
+  // Render-Modell für Computed-Felder:
+  //
+  //   • BACKEND-FELDER mit computed-Eintrag (z.B. gesamtpreis bei einer
+  //     Katzenpension) bleiben als normales Eingabe-Feld stehen. Der Number-
+  //     Input nutzt den computed-Wert als Vorschlag, der User kann jederzeit
+  //     überschreiben (clearing → restore computed).
+  //   • VIRTUELLE computed-Keys (Eintrag in formEnhancements.computed, ABER
+  //     kein passendes Backend-Feld in orderedFields) erscheinen NICHT als
+  //     Input, sondern unten als kompakte 'Berechnungen'-Übersicht oder als
+  //     Inline-Hint unter dem letzten beitragenden Input.
+  const FIELD_LABELS: Record<string, string> = {"excel_upload": "Excel-Datei hochladen", "vorlage": "Vorlage wählen", "rolle_persona": "Rolle / Persona der KI", "kontext": "Kontext / Ausgangssituation", "aufgabe": "Konkrete Aufgabe / Ziel", "format_ausgabe": "Format der Ausgabe", "regeln": "Regeln & Einschränkungen", "generierter_prompt": "Generierter Prompt", "prompt_generieren_button": "Prompt generieren", "prompt_copy_button": "Prompt kopieren", "prompt_name": "Name des Prompts", "ergebnis_hochladen": "Ergebnis hochladen"};
+  const CURRENCY_KEYS = new Set<string>([]);
+  // Applookup-Referenz-Labels: pro applookup-Feld in dieser Form (ownKey)
+  // eine Map { lookupKey: label } für ALLE Felder des Target-Schemas. Wird
+  // beim Render-Walk gefiltert auf die in der computed-Formel tatsächlich
+  // referenzierten lookupKeys (siehe applookupRefs unten).
+  const APPLOOKUP_LABELS: Record<string, Record<string, string>> = {};
+  const inputFields = useMemo(() => flattenFieldOrder(orderedFields), [orderedFieldsKey]);
+  const backendFieldSet = useMemo(() => new Set(inputFields), [inputFields.join(',')]);
+  const virtualComputed = useMemo(
+    () => Object.fromEntries(
+      Object.entries(formEnhancements.computed).filter(([k]) => !backendFieldSet.has(k)),
+    ),
+    [backendFieldSet],
+  );
+  const virtualFormEnhancements = useMemo(
+    () => ({ ...formEnhancements, computed: virtualComputed }),
+    [virtualComputed],
+  );
+  const computedLayout = useMemo(
+    () => classifyComputed(virtualFormEnhancements, inputFields, computedDeps),
+    [virtualFormEnhancements, inputFields.join(',')],
+  );
+  // Applookup-Referenzen: pro ownKey (Lookup-Feld im Form) die Liste der
+  // lookupKeys, die in irgendeiner computed-Formel referenziert werden.
+  // MODUS-1: aus dem Spec-Tree extrahiert. MODUS-2: aus dem Build-Time-
+  // Export computedApplookupRefs (parse-formulas hat Regex-Pairs gesammelt).
+  // Pro (ownKey, lookupKey)-Paar nur einmal; pro ownKey können aber mehrere
+  // lookupKeys gleichzeitig auftauchen (z.B. einzelpreis UND karten10_preis
+  // beim Yoga-Kurs), und alle werden separat als Inline-Hint gerendert.
+  const applookupRefs = useMemo(
+    () => mergeApplookupRefs(
+      extractApplookupRefs(formEnhancements.computed),
+      computedApplookupRefs,
+    ),
+    [],
+  );
+  function summaryLabel(k: string): string {
+    if (FIELD_LABELS[k]) return FIELD_LABELS[k];
+    // Leading underscore(s) als Virtual-Marker abstreifen; Unterstriche zu
+    // Leerzeichen, jedes Wort kapitalisieren. Umlaute kommen vom Sub-Agent
+    // direkt im Key (z. B. `_buchung_dauer_nächte`) — JS/TS/Vite unterstützen
+    // Unicode-Identifier nativ, daher keine ASCII-Transliteration nötig.
+    return k.replace(/^_+/, '')
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+  function formatSummaryValue(k: string, v: unknown): string {
+    if (v === undefined || v === null || v === '' || (typeof v === 'number' && !Number.isFinite(v))) return '—';
+    const n = typeof v === 'number' ? v : Number(v);
+    if (!Number.isFinite(n)) return String(v);
+    // Backend-Feld mit €-Label ODER virtueller Computed-Key, dessen Name nach Geld aussieht.
+    const looksLikeCurrency = CURRENCY_KEYS.has(k) || /(?:kosten|preis|betrag|gesamt|netto|brutto|summe|mwst|rabatt|anzahlung|umsatz|saldo)/i.test(k);
+    if (looksLikeCurrency) {
+      return n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return n.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{DIALOG_INTENT}</DialogTitle>
+      <DialogContent className="max-w-lg max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="px-6 pt-5 pb-3 border-b flex flex-row items-center gap-3 space-y-0">
+          <DialogTitle className="flex-1 truncate text-left">{DIALOG_INTENT}</DialogTitle>
+          {enablePhotoScan && (
+            <button
+              type="button"
+              onClick={() => setAiOpen(o => !o)}
+              aria-expanded={aiOpen}
+              aria-controls="ai-fill-panel"
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all mr-7 shadow-sm ${
+                aiOpen
+                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                  : 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/15 hover:border-primary/50'
+              }`}
+            >
+              <IconSparkles className={`h-3.5 w-3.5 ${aiOpen ? '' : 'text-primary'}`} />
+              <span className="hidden sm:inline">KI-Ausfüllen</span>
+              <IconChevronDown className={`h-3 w-3 transition-transform ${aiOpen ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </DialogHeader>
-
-        {enablePhotoScan && (
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-            <div>
-              <div className="flex items-center gap-1.5 font-medium">
-                <IconSparkles className="h-4 w-4 text-primary" />
-                AI Assistant
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Understands photos, documents, and text and fills everything out for you</p>
-            </div>
+        {enablePhotoScan && aiOpen && (
+          <div id="ai-fill-panel" className="border-b bg-muted/20 px-6 py-4 space-y-3">
+            <p className="text-xs text-muted-foreground">Versteht Fotos, Dokumente und Text und füllt alles für dich aus</p>
             <div className="flex items-start gap-2 pl-0.5">
               <Checkbox
                 id="ai-use-personal-info"
@@ -202,21 +681,21 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
               />
               <span className="text-xs text-muted-foreground leading-snug">
                 <Label htmlFor="ai-use-personal-info" className="text-xs font-normal text-muted-foreground cursor-pointer inline">
-                  AI assistant may use my personal information
+                  KI-Assistent darf zusätzlich Informationen zu meiner Person verwenden
                 </Label>
                 {' '}
                 <button type="button" onClick={handleShowProfileInfo} className="text-xs text-primary hover:underline whitespace-nowrap">
-                  {profileLoading ? 'Loading...' : '(more info)'}
+                  {profileLoading ? 'Lade...' : '(mehr Infos)'}
                 </button>
               </span>
             </div>
             {showProfileInfo && (
               <div className="rounded-md border bg-muted/50 p-2 text-xs max-h-40 overflow-y-auto">
-                <p className="font-medium mb-1">The following info about you can be used by the AI:</p>
+                <p className="font-medium mb-1">Folgende Infos über dich können von der KI genutzt werden:</p>
                 {profileData ? Object.values(profileData).map((v, i) => (
                   <span key={i}>{i > 0 && ", "}{typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
                 )) : (
-                  <span className="text-muted-foreground">Could not load profile</span>
+                  <span className="text-muted-foreground">Profil konnte nicht geladen werden</span>
                 )}
               </div>
             )}
@@ -247,8 +726,8 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
                     <IconLoader2 className="h-7 w-7 text-primary animate-spin" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium">AI analyzing...</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Fields will be filled automatically</p>
+                    <p className="text-sm font-medium">KI analysiert...</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Felder werden automatisch ausgefüllt</p>
                   </div>
                 </div>
               ) : scanSuccess ? (
@@ -257,8 +736,8 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
                     <IconCircleCheck className="h-7 w-7 text-green-600 dark:text-green-400" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium text-green-700 dark:text-green-400">Fields filled!</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Review the values and adjust if needed</p>
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400">Felder ausgefüllt!</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Prüfe die Werte und passe sie ggf. an</p>
                   </div>
                 </div>
               ) : (
@@ -267,7 +746,7 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
                     <IconPhotoPlus className="h-7 w-7 text-primary/70" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium">Drop your photo or document here or browse</p>
+                    <p className="text-sm font-medium">Foto oder Dokument hierher ziehen oder auswählen</p>
                   </div>
                 </div>
               )}
@@ -291,11 +770,11 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
             <div className="grid grid-cols-3 gap-2">
               <Button type="button" variant="outline" size="sm" className="h-10 text-xs" disabled={scanning}
                 onClick={e => { e.stopPropagation(); cameraInputRef.current?.click(); }}>
-                <IconCamera className="h-3.5 w-3.5 mr-1" />Camera
+                <IconCamera className="h-3.5 w-3.5 mr-1" />Kamera
               </Button>
               <Button type="button" variant="outline" size="sm" className="h-10 text-xs" disabled={scanning}
                 onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-                <IconUpload className="h-3.5 w-3.5 mr-1" />Choose photo
+                <IconUpload className="h-3.5 w-3.5 mr-1" />Foto wählen
               </Button>
               <Button type="button" variant="outline" size="sm" className="h-10 text-xs" disabled={scanning}
                 onClick={e => {
@@ -306,13 +785,13 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
                     setTimeout(() => { if (fileInputRef.current) fileInputRef.current.accept = 'image/*,application/pdf'; }, 100);
                   }
                 }}>
-                <IconFileText className="h-3.5 w-3.5 mr-1" />Document
+                <IconFileText className="h-3.5 w-3.5 mr-1" />Dokument
               </Button>
             </div>
 
             <div className="relative">
               <Textarea
-                placeholder="Type or paste text, e.g. notes, emails, descriptions..."
+                placeholder="Text eingeben oder einfügen, z.B. Notizen, E-Mails, Beschreibungen..."
                 value={aiText}
                 onChange={e => {
                   setAiText(e.target.value);
@@ -354,94 +833,116 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
                 disabled={scanning}
                 onClick={() => handleAiExtract()}
               >
-                <IconSparkles className="h-3.5 w-3.5 mr-1.5" />Analyze
+                <IconSparkles className="h-3.5 w-3.5 mr-1.5" />Analysieren
               </Button>
             )}
-            <div className="flex justify-center pt-1">
-              <IconArrowBigDownLinesFilled className="h-8 w-8 text-muted-foreground/30" />
-            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="vorlage">Vorlage waehlen</Label>
-            <Select
-              value={lookupKey(fields.vorlage) ?? 'none'}
-              onValueChange={v => setFields(f => ({ ...f, vorlage: v === 'none' ? undefined : v as any }))}
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 min-w-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 space-y-4 min-w-0">
+            {(() => {
+              const renderField = (k: string) => {
+                const inlineHints = computedLayout.anchors[k] ?? [];
+                const refs = applookupRefs[k] ?? [];
+                return (
+                  <div key={k} className="space-y-1.5 min-w-0">
+                    {fieldBlocks[k]}
+                    {refs.map(({ lookupKey }) => {
+                      // Show the live numeric value the formula will pull from
+                      // the selected lookup target (e.g. "Monatspreis: 34,90 €"
+                      // under the Tarif combobox). Hidden while no lookup is
+                      // selected or the target field is non-numeric.
+                      const v = resolveApplookupRef(k, lookupKey, fields as Record<string, unknown>, computedContext);
+                      if (v === null) return null;
+                      const lbl = APPLOOKUP_LABELS[k]?.[lookupKey] ?? lookupKey;
+                      const text = formatSummaryValue(lookupKey, v);
+                      return (
+                        <div key={`alh-${k}-${lookupKey}`} className="flex items-center gap-1.5 pl-3 text-xs text-muted-foreground">
+                          <span className="text-primary/70">→</span>
+                          <span>{lbl}</span>
+                          <span className="ml-auto font-medium tabular-nums text-foreground">{text}</span>
+                        </div>
+                      );
+                    })}
+                    {inlineHints.map((cKey) => {
+                      const v = computedValues[cKey];
+                      const text = formatSummaryValue(cKey, v);
+                      if (text === '—') return null;
+                      return (
+                        <div key={cKey} className="flex items-center gap-1.5 pl-3 text-xs text-muted-foreground">
+                          <span className="text-primary/70">→</span>
+                          <span>{summaryLabel(cKey)}</span>
+                          <span className="ml-auto font-medium tabular-nums text-foreground">{text}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              };
+              return orderedFields.map((item, idx) => {
+                if (typeof item === 'string') return renderField(item);
+                const cols = item.cols ?? `repeat(${item.row.length}, minmax(0, 1fr))`;
+                return (
+                  <div key={`row-${idx}`} className="grid gap-3" style={{ gridTemplateColumns: cols }}>
+                    {item.row.map(renderField)}
+                  </div>
+                );
+              });
+            })()}
+            {(computedLayout.aggregates.length > 0 || computedLayout.finalTotal) && (
+              <div className="mt-6 pt-4 border-t border-border space-y-1.5">
+                {computedLayout.aggregates.length > 0 && (
+                  <dl className="space-y-1.5 pb-2">
+                    {computedLayout.aggregates.map((k) => {
+                      const userVal = (fields as Record<string, unknown>)[k];
+                      const computed = computedValues[k];
+                      const v = userVal !== undefined && userVal !== null && userVal !== '' ? userVal : computed;
+                      return (
+                        <div key={k} className="flex justify-between items-baseline gap-3">
+                          <dt className="text-sm text-muted-foreground truncate">{summaryLabel(k)}</dt>
+                          <dd className="text-sm font-medium tabular-nums whitespace-nowrap">{formatSummaryValue(k, v)}</dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                )}
+                {computedLayout.finalTotal && (() => {
+                  const k = computedLayout.finalTotal;
+                  const userVal = (fields as Record<string, unknown>)[k];
+                  const computed = computedValues[k];
+                  const v = userVal !== undefined && userVal !== null && userVal !== '' ? userVal : computed;
+                  // Innere Border nur wenn aggregates existieren — sonst hätten wir
+                  // zwei direkt aufeinanderfolgende Striche (Outer + Inner) mit nur
+                  // einer Aggregat-Zeile dazwischen → zu viel visuelles Rauschen.
+                  const sep = computedLayout.aggregates.length > 0 ? 'pt-3 border-t border-border' : 'pt-1';
+                  return (
+                    <div className={`flex justify-between items-baseline gap-3 ${sep}`}>
+                      <span className="text-base font-semibold text-foreground">{summaryLabel(k)}</span>
+                      <span className="text-lg font-bold tabular-nums whitespace-nowrap text-foreground">{formatSummaryValue(k, v)}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            {recordId && (
+              <div className="pt-2 border-t border-border">
+                <AttachmentsSection appId={APP_IDS.PROMPT_GENERATOR_PRO} recordId={recordId} />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="sticky bottom-0 border-t bg-background/95 backdrop-blur px-6 py-3 gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
+            <Button
+              type="submit"
+              disabled={saving || !isDirty}
             >
-              <SelectTrigger id="vorlage"><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">—</SelectItem>
-                <SelectItem value="email">Professionelle E-Mail verfassen</SelectItem>
-                <SelectItem value="blogpost">Blogpost-Gliederung erstellen</SelectItem>
-                <SelectItem value="linkedin">Social-Media-Post (LinkedIn)</SelectItem>
-                <SelectItem value="manuell">Manuelle Eingabe</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="rolle_persona">Rolle / Persona der KI</Label>
-            <Textarea
-              id="rolle_persona"
-              value={fields.rolle_persona ?? ''}
-              onChange={e => setFields(f => ({ ...f, rolle_persona: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="kontext">Kontext / Ausgangssituation</Label>
-            <Textarea
-              id="kontext"
-              value={fields.kontext ?? ''}
-              onChange={e => setFields(f => ({ ...f, kontext: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="aufgabe">Konkrete Aufgabe / Ziel</Label>
-            <Textarea
-              id="aufgabe"
-              value={fields.aufgabe ?? ''}
-              onChange={e => setFields(f => ({ ...f, aufgabe: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="format_ausgabe">Format der Ausgabe</Label>
-            <Textarea
-              id="format_ausgabe"
-              value={fields.format_ausgabe ?? ''}
-              onChange={e => setFields(f => ({ ...f, format_ausgabe: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="regeln">Regeln & Einschraenkungen</Label>
-            <Textarea
-              id="regeln"
-              value={fields.regeln ?? ''}
-              onChange={e => setFields(f => ({ ...f, regeln: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="generierter_prompt">Generierter Prompt</Label>
-            <Textarea
-              id="generierter_prompt"
-              value={fields.generierter_prompt ?? ''}
-              onChange={e => setFields(f => ({ ...f, generierter_prompt: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : defaultValues ? 'Save' : 'Create'}
+              {saving ? 'Speichern...' : defaultValues ? 'Speichern' : 'Erstellen'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

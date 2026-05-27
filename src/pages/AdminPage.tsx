@@ -20,17 +20,22 @@ import {
   SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconPencil, IconTrash, IconPlus, IconFilter, IconX, IconArrowsUpDown, IconArrowUp, IconArrowDown, IconSearch, IconCopy } from '@tabler/icons-react';
+import { IconPencil, IconTrash, IconPlus, IconFilter, IconX, IconArrowsUpDown, IconArrowUp, IconArrowDown, IconSearch, IconCopy, IconFileText } from '@tabler/icons-react';
 
 // Field metadata per entity for bulk edit and column filters
 const PROMPTGENERATORPRO_FIELDS = [
-  { key: 'vorlage', label: 'Vorlage waehlen', type: 'lookup/select', options: [{ key: 'email', label: 'Professionelle E-Mail verfassen' }, { key: 'blogpost', label: 'Blogpost-Gliederung erstellen' }, { key: 'linkedin', label: 'Social-Media-Post (LinkedIn)' }, { key: 'manuell', label: 'Manuelle Eingabe' }] },
+  { key: 'excel_upload', label: 'Excel-Datei hochladen', type: 'file' },
+  { key: 'vorlage', label: 'Vorlage wählen', type: 'lookup/select', options: [{ key: 'email', label: 'Professionelle E-Mail verfassen' }, { key: 'blogpost', label: 'Blogpost-Gliederung erstellen' }, { key: 'linkedin', label: 'Social-Media-Post (LinkedIn)' }, { key: 'ein_bild_generieren', label: 'Ein Bild generieren' }, { key: 'manuell', label: 'Manuelle Eingabe' }] },
   { key: 'rolle_persona', label: 'Rolle / Persona der KI', type: 'string/textarea' },
   { key: 'kontext', label: 'Kontext / Ausgangssituation', type: 'string/textarea' },
   { key: 'aufgabe', label: 'Konkrete Aufgabe / Ziel', type: 'string/textarea' },
   { key: 'format_ausgabe', label: 'Format der Ausgabe', type: 'string/textarea' },
-  { key: 'regeln', label: 'Regeln & Einschraenkungen', type: 'string/textarea' },
+  { key: 'regeln', label: 'Regeln & Einschränkungen', type: 'string/textarea' },
   { key: 'generierter_prompt', label: 'Generierter Prompt', type: 'string/textarea' },
+  { key: 'prompt_generieren_button', label: 'Prompt generieren', type: 'bool' },
+  { key: 'prompt_copy_button', label: 'Prompt kopieren', type: 'bool' },
+  { key: 'prompt_name', label: 'Name des Prompts', type: 'string/textarea' },
+  { key: 'ergebnis_hochladen', label: 'Ergebnis hochladen', type: 'file' },
 ];
 
 const ENTITY_TABS = [
@@ -290,7 +295,7 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
         <p className="text-destructive">{error.message}</p>
-        <Button onClick={fetchAll}>Try Again</Button>
+        <Button onClick={fetchAll}>Erneut versuchen</Button>
       </div>
     );
   }
@@ -302,11 +307,11 @@ export default function AdminPage() {
 
   return (
     <PageShell
-      title="Admin"
-      subtitle="Manage all data"
+      title="Verwaltung"
+      subtitle="Alle Daten verwalten"
       action={
         <Button onClick={() => setCreateEntity(activeTab)} className="shrink-0">
-          <IconPlus className="h-4 w-4 mr-2" /> Add
+          <IconPlus className="h-4 w-4 mr-2" /> Hinzufügen
         </Button>
       }
     >
@@ -335,7 +340,7 @@ export default function AdminPage() {
           <div className="relative w-full max-w-sm">
             <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Suchen..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-9"
@@ -343,31 +348,31 @@ export default function AdminPage() {
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowFilters(f => !f)} className="gap-2">
             <IconFilter className="h-4 w-4" />
-            Filter
+            Filtern
             {activeFilterCount > 0 && (
               <Badge variant="secondary" className="ml-1">{activeFilterCount}</Badge>
             )}
           </Button>
           {activeFilterCount > 0 && (
             <Button variant="ghost" size="sm" onClick={() => clearEntityFilters(activeTab)}>
-              Clear filters
+              Filter zurücksetzen
             </Button>
           )}
         </div>
         {sel.size > 0 && (
           <div className="flex items-center gap-2 flex-wrap bg-muted/60 rounded-lg px-3 py-1.5">
-            <span className="text-sm font-medium">{sel.size} selected</span>
+            <span className="text-sm font-medium">{sel.size} ausgewählt</span>
             <Button variant="outline" size="sm" onClick={() => setBulkEditOpen(activeTab)}>
-              <IconPencil className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Edit field</span>
+              <IconPencil className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Feld bearbeiten</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleBulkClone()}>
-              <IconCopy className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Clone selected</span>
+              <IconCopy className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Kopieren</span>
             </Button>
             <Button variant="destructive" size="sm" onClick={() => setDeleteTargets({ entity: activeTab, ids: Array.from(sel) })}>
-              <IconTrash className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Delete selected</span>
+              <IconTrash className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Ausgewählte löschen</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => clearSelection(activeTab)}>
-              <IconX className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Deselect all</span>
+              <IconX className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Auswahl aufheben</span>
             </Button>
           </div>
         )}
@@ -380,18 +385,18 @@ export default function AdminPage() {
               <label className="text-xs font-medium text-muted-foreground">{fm.label}</label>
               {fm.type === 'bool' ? (
                 <Select value={filters[activeTab]?.[fm.key] ?? ''} onValueChange={v => updateFilter(activeTab, fm.key, v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Alle" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="true">Yes</SelectItem>
-                    <SelectItem value="false">No</SelectItem>
+                    <SelectItem value="all">Alle</SelectItem>
+                    <SelectItem value="true">Ja</SelectItem>
+                    <SelectItem value="false">Nein</SelectItem>
                   </SelectContent>
                 </Select>
               ) : fm.type === 'lookup/select' || fm.type === 'lookup/radio' ? (
                 <Select value={filters[activeTab]?.[fm.key] ?? ''} onValueChange={v => updateFilter(activeTab, fm.key, v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Alle" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="all">Alle</SelectItem>
                     {fm.options?.map((o: any) => (
                       <SelectItem key={o.key} value={o.label}>{o.label}</SelectItem>
                     ))}
@@ -400,7 +405,7 @@ export default function AdminPage() {
               ) : (
                 <Input
                   className="h-8 text-xs"
-                  placeholder="Filter..."
+                  placeholder="Filtern..."
                   value={filters[activeTab]?.[fm.key] ?? ''}
                   onChange={e => updateFilter(activeTab, fm.key, e.target.value)}
                 />
@@ -428,7 +433,7 @@ export default function AdminPage() {
                   </span>
                 </TableHead>
               ))}
-              <TableHead className="w-24 uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6">Actions</TableHead>
+              <TableHead className="w-24 uppercase text-xs font-semibold text-secondary-foreground tracking-wider px-6">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -448,7 +453,7 @@ export default function AdminPage() {
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           val ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                         }`}>
-                          {val ? 'Yes' : 'No'}
+                          {val ? 'Ja' : 'Nein'}
                         </span>
                       </TableCell>
                     );
@@ -456,10 +461,23 @@ export default function AdminPage() {
                   if (fm.type === 'lookup/select' || fm.type === 'lookup/radio') {
                     return <TableCell key={fm.key}><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{val?.label ?? '—'}</span></TableCell>;
                   }
-                  if (fm.type.includes('multiplelookup')) {
+                  if (fm.type.startsWith('multiplelookup')) {
                     return <TableCell key={fm.key}>{Array.isArray(val) ? val.map((v: any) => v?.label ?? v).join(', ') : '—'}</TableCell>;
                   }
-                  if (fm.type.includes('applookup')) {
+                  if (fm.type.startsWith('multipleapplookup')) {
+                    return (
+                      <TableCell key={fm.key}>
+                        {Array.isArray(val) && val.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {val.map((url: any, i: number) => (
+                              <span key={i} className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getApplookupDisplay(activeTab, fm.key, url)}</span>
+                            ))}
+                          </div>
+                        ) : '—'}
+                      </TableCell>
+                    );
+                  }
+                  if (fm.type.startsWith('applookup')) {
                     return <TableCell key={fm.key}><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getApplookupDisplay(activeTab, fm.key, val)}</span></TableCell>;
                   }
                   if (fm.type.includes('date')) {
@@ -505,7 +523,7 @@ export default function AdminPage() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={fieldMeta.length + 2} className="text-center py-16 text-muted-foreground">
-                  No results found.
+                  Keine Ergebnisse gefunden.
                 </TableCell>
               </TableRow>
             )}
@@ -546,8 +564,8 @@ export default function AdminPage() {
         open={!!deleteTargets}
         onClose={() => setDeleteTargets(null)}
         onConfirm={handleBulkDelete}
-        title="Delete selected"
-        description={`Are you sure you want to delete ${deleteTargets?.ids.length ?? 0} records? This action cannot be undone.`}
+        title="Ausgewählte löschen"
+        description={`Sollen ${deleteTargets?.ids.length ?? 0} Einträge wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.`}
       />
     </PageShell>
   );
