@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { PromptGeneratorPro } from '@/types/app';
-import { APP_IDS } from '@/types/app';
+import type { PromptGeneratorPro, LookupValue } from '@/types/app';
+import { APP_IDS, LOOKUP_OPTIONS } from '@/types/app';
 import { extractRecordId, createRecordUrl, cleanFieldsForApi, uploadFile, getUserProfile } from '@/services/livingAppsService';
 import {
   Dialog, DialogContent, DialogHeader,
@@ -15,7 +15,7 @@ import { formEnhancements, computedDeps, computedApplookupRefs } from '@/config/
 import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconCamera, IconChevronDown, IconCircleCheck, IconClipboard, IconFileText, IconLoader2, IconPhotoPlus, IconSparkles, IconUpload, IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconCamera, IconChevronDown, IconCircleCheck, IconClipboard, IconFileText, IconLoader2, IconPhotoPlus, IconSparkles, IconUpload, IconX } from '@tabler/icons-react';
 import { fileToDataUri, extractFromInput, extractPhotoMeta, reverseGeocode, dataUriToBlob } from '@/lib/ai';
 import { lookupKey } from '@/lib/formatters';
 
@@ -23,27 +23,52 @@ interface PromptGeneratorProDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (fields: PromptGeneratorPro['fields']) => Promise<void>;
-  defaultValues?: PromptGeneratorPro['fields'];
+  /** SHAPE-TOLERANT: lookup fields accept the bare key (string) or the
+   *  LookupValue object; applookup fields the bare record id or the full
+   *  record URL — the dialog normalizes both. */
+  defaultValues?: Omit<PromptGeneratorPro['fields'], 'vorlage'> & {
+    vorlage?: LookupValue | string;
+  };
   /** Record id when editing — enables the attachments section. Omit on create. */
   recordId?: string;
   enablePhotoScan?: boolean;
   enablePhotoLocation?: boolean;
 }
 
+// defaultValues are SHAPE-TOLERANT: the dialog resolves bare lookup keys via
+// its own options and bare record ids via the field's target app — consumers
+// never carry the LookupValue/record-URL shape in their head.
+const NORMALIZE_LOOKUPS: Record<string, readonly { key: string; label: string }[]> = {
+  vorlage: LOOKUP_OPTIONS['prompt_generator_pro']?.['vorlage'] ?? [],
+};
+function normalizeDefaults(values: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...values };
+  for (const [k, opts] of Object.entries(NORMALIZE_LOOKUPS)) {
+    const v = out[k];
+    if (typeof v === 'string') out[k] = opts.find(o => o.key === v) ?? { key: v, label: v };
+    else if (Array.isArray(v)) out[k] = v.map(x => (typeof x === 'string' ? opts.find(o => o.key === x) ?? { key: x, label: x } : x));
+  }
+  return out;
+}
+
 export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValues, recordId, enablePhotoScan = true, enablePhotoLocation = true }: PromptGeneratorProDialogProps) {
   const [fields, setFields] = useState<Partial<PromptGeneratorPro['fields']>>({});
   const [saving, setSaving] = useState(false);
+  const normalizedDefaults = useMemo<Record<string, unknown> | undefined>(
+    () => (defaultValues ? normalizeDefaults(defaultValues as Record<string, unknown>) : undefined),
+    [defaultValues],
+  );
   // Dirty-tracking: in edit-mode the Speichern button is disabled until the
   // user actually changes something. JSON.stringify is good enough for our
   // fields (plain values + LookupValue objects + string arrays).
   const isDirty = useMemo(() => {
-    if (!defaultValues) return true;  // create-mode: always allow submit
+    if (!normalizedDefaults) return true;  // create-mode: always allow submit
     try {
-      return JSON.stringify(fields) !== JSON.stringify(defaultValues);
+      return JSON.stringify(fields) !== JSON.stringify(normalizedDefaults);
     } catch {
       return true;
     }
-  }, [fields, defaultValues]);
+  }, [fields, normalizedDefaults]);
   const [aiOpen, setAiOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
@@ -93,12 +118,13 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
 
   useEffect(() => {
     if (open) {
-      setFields(applyDefaults((defaultValues ?? {}) as Record<string, unknown>, formEnhancements.defaults) as Partial<PromptGeneratorPro['fields']>);
+      setFields(applyDefaults(normalizedDefaults ?? {}, formEnhancements.defaults) as Partial<PromptGeneratorPro['fields']>);
       setPreview(null);
       setScanSuccess(false);
       setAiText('');
+      setSubmitError(null);
     }
-  }, [open, defaultValues]);
+  }, [open, normalizedDefaults]);
   useEffect(() => {
     try { localStorage.setItem('ai-use-personal-info', String(usePersonalInfo)); } catch {}
   }, [usePersonalInfo]);
@@ -116,9 +142,16 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
     }
   }
 
+  // Submit errors surface IN the dialog (it is modal — a banner in the page
+  // body would be hidden behind it). A consumer onSubmit that THROWS (the
+  // documented "throw to prevent closing" validation pattern) lands here:
+  // the dialog stays open, nothing is saved, the message is visible.
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSubmitError(null);
     try {
       // Fill empty number slots from computed values; user-typed values always win.
       // CRITICAL: only backend-mapped keys may be backfilled. Virtual computeds
@@ -137,6 +170,8 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
       const clean = cleanFieldsForApi(merged, 'prompt_generator_pro');
       await onSubmit(clean as PromptGeneratorPro['fields']);
       onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error && err.message ? err.message : 'Speichern fehlgeschlagen.');
     } finally {
       setSaving(false);
     }
@@ -931,6 +966,12 @@ export function PromptGeneratorProDialog({ open, onClose, onSubmit, defaultValue
               </div>
             )}
           </div>
+          {submitError && (
+            <div className="flex items-start gap-2 border-t border-destructive/20 bg-destructive/10 px-6 py-2.5 text-sm text-destructive" role="alert">
+              <IconAlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span className="min-w-0 break-words">{submitError}</span>
+            </div>
+          )}
           <DialogFooter className="sticky bottom-0 border-t bg-background/95 backdrop-blur px-6 py-3 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
             <Button

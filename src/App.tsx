@@ -8,6 +8,7 @@ import { Layout } from '@/components/Layout';
 import DashboardOverview from '@/pages/DashboardOverview';
 import AdminPage from '@/pages/AdminPage';
 import PromptGeneratorProPage from '@/pages/PromptGeneratorProPage';
+import PromptGeneratorProDetailPage from '@/pages/PromptGeneratorProDetailPage';
 import PublicFormPromptGeneratorPro from '@/pages/public/PublicForm_PromptGeneratorPro';
 // <public:imports>
 // </public:imports>
@@ -27,6 +28,7 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route index element={<DashboardOverview />} />
                 <Route path="prompt-generator-pro" element={<PromptGeneratorProPage />} />
+                <Route path="prompt-generator-pro/:id" element={<PromptGeneratorProDetailPage />} />
                 <Route path="admin" element={<AdminPage />} />
                 {/* <custom:routes> */}
                 {/* </custom:routes> */}

@@ -5,6 +5,7 @@ import ChatWidget from '@/components/ChatWidget';
 import { ActionInputDialog } from '@/components/ActionInputDialog';
 import { TopBar } from '@/components/TopBar';
 import { ActionsSidebar } from '@/components/ActionsSidebar';
+import { IntentsNav } from '@/components/IntentsNav';
 import { useActions } from '@/context/ActionsContext';
 import { Button } from '@/components/ui/button';
 import { VersionCheck } from '@/components/VersionCheck';
@@ -76,6 +77,8 @@ export function Layout() {
             <span className="truncate">Zurück</span>
           </a>
         </nav>
+
+        <IntentsNav onNavigate={() => setSidebarOpen(false)} />
 
         <ActionsSidebar />
 

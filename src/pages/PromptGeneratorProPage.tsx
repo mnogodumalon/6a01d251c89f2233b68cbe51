@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LivingAppsService, extractRecordId, createRecordUrl } from '@/services/livingAppsService';
 import type { PromptGeneratorPro } from '@/types/app';
 import { APP_IDS } from '@/types/app';
@@ -11,19 +12,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { IconPencil, IconTrash, IconPlus, IconSearch, IconArrowsUpDown, IconArrowUp, IconArrowDown, IconFileText } from '@tabler/icons-react';
 import { PromptGeneratorProDialog } from '@/components/dialogs/PromptGeneratorProDialog';
-import { PromptGeneratorProViewDialog } from '@/components/dialogs/PromptGeneratorProViewDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageShell } from '@/components/PageShell';
 import { AI_PHOTO_SCAN, AI_PHOTO_LOCATION } from '@/config/ai-features';
 
 export default function PromptGeneratorProPage() {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<PromptGeneratorPro[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PromptGeneratorPro | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PromptGeneratorPro | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<PromptGeneratorPro | null>(null);
   const [sortKey, setSortKey] = useState('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -198,7 +198,7 @@ export default function PromptGeneratorProPage() {
           </TableHeader>
           <TableBody>
             {sortRecords(filtered).map(record => (
-              <TableRow key={record.record_id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={(e) => { if ((e.target as HTMLElement).closest('button, [role="checkbox"]')) return; setViewingRecord(record); }}>
+              <TableRow key={record.record_id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={(e) => { if ((e.target as HTMLElement).closest('button, [role="checkbox"]')) return; navigate(`/prompt-generator-pro/${record.record_id}`); }}>
                 <TableCell>{record.fields.excel_upload ? <div className="relative h-8 w-8 rounded bg-muted overflow-hidden"><div className="absolute inset-0 flex items-center justify-center"><IconFileText size={14} className="text-muted-foreground" /></div><img src={record.fields.excel_upload} alt="" className="relative h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /></div> : '—'}</TableCell>
                 <TableCell><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{record.fields.vorlage?.label ?? '—'}</span></TableCell>
                 <TableCell className="max-w-xs"><span className="truncate block">{record.fields.rolle_persona ?? '—'}</span></TableCell>
@@ -252,12 +252,6 @@ export default function PromptGeneratorProPage() {
         description="Soll dieser Eintrag wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden."
       />
 
-      <PromptGeneratorProViewDialog
-        open={!!viewingRecord}
-        onClose={() => setViewingRecord(null)}
-        record={viewingRecord}
-        onEdit={(r) => { setViewingRecord(null); setEditingRecord(r); }}
-      />
     </PageShell>
   );
 }

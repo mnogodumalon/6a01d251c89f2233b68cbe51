@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { APP_IDS } from '@/types/app';
 import { AttachmentsSection } from '@/components/AttachmentsSection';
+import { MediaThumbnail } from '@/components/widgets/MediaViewer';
 import { Badge } from '@/components/ui/badge';
 import { IconPencil, IconFileText } from '@tabler/icons-react';
 
@@ -37,9 +38,7 @@ export function PromptGeneratorProViewDialog({ open, onClose, record, onEdit }: 
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Excel-Datei hochladen</Label>
             {record.fields.excel_upload ? (
-              <div className="relative w-full rounded-lg bg-muted overflow-hidden border">
-                <img src={record.fields.excel_upload} alt="" className="w-full h-auto object-contain" />
-              </div>
+              <MediaThumbnail src={record.fields.excel_upload} fit="contain" className="w-full rounded-lg border" />
             ) : <p className="text-sm text-muted-foreground">—</p>}
           </div>
           <div className="space-y-1">
@@ -93,9 +92,7 @@ export function PromptGeneratorProViewDialog({ open, onClose, record, onEdit }: 
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Ergebnis hochladen</Label>
             {record.fields.ergebnis_hochladen ? (
-              <div className="relative w-full rounded-lg bg-muted overflow-hidden border">
-                <img src={record.fields.ergebnis_hochladen} alt="" className="w-full h-auto object-contain" />
-              </div>
+              <MediaThumbnail src={record.fields.ergebnis_hochladen} fit="contain" className="w-full rounded-lg border" />
             ) : <p className="text-sm text-muted-foreground">—</p>}
           </div>
           <div className="pt-2 border-t border-border">
