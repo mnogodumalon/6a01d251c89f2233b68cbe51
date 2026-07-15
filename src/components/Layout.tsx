@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { IconAlertCircle, IconArrowBackUp, IconMenu2 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import ChatWidget from '@/components/ChatWidget';
+import { ActionCodeDrawer } from '@/components/ActionCodeDrawer';
 import { ActionInputDialog } from '@/components/ActionInputDialog';
 import { TopBar } from '@/components/TopBar';
 import { ActionsSidebar } from '@/components/ActionsSidebar';
@@ -28,7 +29,7 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-background">
       {!IS_EMBED && (
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm" style={{ height: 'var(--topbar-h)' }}>
+      <header className="fixed top-0 left-0 right-0 z-[var(--z-chrome)] bg-white shadow-sm" style={{ height: 'var(--topbar-h)' }}>
         <div className="flex items-center justify-between h-full px-4 lg:px-8">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -51,7 +52,7 @@ export function Layout() {
 
       {!IS_EMBED && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[var(--z-scrim)] lg:hidden"
           style={{ top: 'var(--topbar-h)' }}
           onClick={() => setSidebarOpen(false)}
         />
@@ -60,7 +61,7 @@ export function Layout() {
       {!IS_EMBED && (
       <aside
         className={`
-          fixed left-0 z-40 w-72 bg-sidebar border-r border-sidebar-border overflow-hidden
+          fixed left-0 z-[var(--z-sidebar)] w-72 bg-sidebar border-r border-sidebar-border overflow-hidden
           transform transition-transform duration-200 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
@@ -112,6 +113,7 @@ export function Layout() {
       </div>
 
       <ChatWidget />
+      <ActionCodeDrawer />
 
       {inputFormAction && inputFormAction.metadata?.input_schema && (
         <ActionInputDialog

@@ -69,6 +69,9 @@ export const FIELD_TYPES: Record<string, Record<string, string>> = {
   },
 };
 
+export const HUB_TOPOLOGY: Record<string, { field: string; entity: string }[]> = {
+};
+
 type StripLookup<T> = {
   [K in keyof T]: T[K] extends LookupValue | undefined ? string | LookupValue | undefined
     : T[K] extends LookupValue[] | undefined ? string[] | LookupValue[] | undefined

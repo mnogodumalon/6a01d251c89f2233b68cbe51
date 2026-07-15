@@ -92,7 +92,7 @@
  * @version 1.0.0
  * @since 2026-06-03
  */
-import { type ReactNode, type ComponentType, useEffect, useState, useCallback } from 'react';
+import { type ReactNode, type ComponentType, useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { IconArrowLeft, IconPencil, IconX, IconAlertCircle, IconRefresh, IconFileOff, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
@@ -305,7 +305,10 @@ export function RecordSection({ title, icon: Icon, cols = 1, className, children
   );
 }
 
-type RecordFieldFormat = 'text' | 'longtext' | 'date' | 'datetime' | 'currency' | 'bool' | 'email' | 'url' | 'pill';
+// Exported as the SINGLE source of truth for the shared 9-value format
+// vocabulary — TableWidget imports this type and extends it (TableCellFormat).
+// Keep these literals in sync only HERE.
+export type RecordFieldFormat = 'text' | 'longtext' | 'date' | 'datetime' | 'currency' | 'bool' | 'email' | 'url' | 'pill';
 
 type RecordFieldProps = {
   label: ReactNode;
@@ -463,7 +466,7 @@ export function RecordRelation({ label, name, meta, icon: Icon, href, onClick, c
     return <a href={href} className={`block rounded-2xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors${extra}`}>{Inner}</a>;
   }
   if (onClick) {
-    return <button type="button" onClick={onClick} className={`text-left rounded-2xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors${extra}`}>{Inner}</button>;
+    return <button type="button" onClick={onClick} className={`block w-full text-left rounded-2xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors${extra}`}>{Inner}</button>;
   }
   return <div className={`rounded-2xl border border-border bg-card p-4 ${isClickable ? 'cursor-pointer' : ''}${extra}`}>{Inner}</div>;
 }
@@ -503,6 +506,12 @@ type RecordOverlayProps = {
    * loses the user's preview context. Stay in the overlay.
    */
   onBack?: () => void;
+  /**
+   * Changes → the body scroll resets to top. The Host passes the stack DEPTH
+   * so a drill/back lands at the top of the new record (the shell itself
+   * stays mounted — no backdrop re-fade, no re-slide).
+   */
+  scrollKey?: string | number;
   editLabel?: string;
   closeLabel?: string;
   backLabel?: string;
@@ -642,12 +651,20 @@ export function RecordOverlay({
   prevLabel = 'Vorheriges',
   nextLabel = 'Nächstes',
   className,
+  scrollKey,
   children,
 }: RecordOverlayProps) {
   const requestClose = useCallback(() => {
     if (onBeforeClose && onBeforeClose() === false) return;
     onClose();
   }, [onBeforeClose, onClose]);
+
+  // Scroll-reset on stack navigation: the Host keeps ONE shell mounted while
+  // the body swaps — without this, the next record opens mid-scroll.
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0 });
+  }, [scrollKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -699,7 +716,7 @@ export function RecordOverlay({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="inline-flex h-9 w-9 max-sm:h-11 max-sm:w-11 items-center justify-center rounded-lg max-sm:rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors max-sm:border max-sm:border-border max-sm:bg-card max-sm:shadow-sm"
             aria-label={backLabel}
           >
             <IconArrowLeft size={18} />
@@ -708,7 +725,7 @@ export function RecordOverlay({
         <button
           type="button"
           onClick={requestClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className="inline-flex h-9 w-9 max-sm:h-11 max-sm:w-11 items-center justify-center rounded-lg max-sm:rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors max-sm:border max-sm:border-border max-sm:bg-card max-sm:shadow-sm"
           aria-label={closeLabel}
         >
           <IconX size={18} />
@@ -735,7 +752,7 @@ export function RecordOverlay({
       : 'w-full';
     return createPortal(
       <div
-        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+        className="fixed inset-0 z-[var(--z-overlay)] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
         onClick={closeOnBackdropClick ? requestClose : undefined}
       >
         <div
@@ -753,7 +770,7 @@ export function RecordOverlay({
           )}
           <div className={`flex flex-col min-h-0 overflow-hidden ${contentColumn}`}>
             {header}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div ref={bodyRef} className="flex-1 overflow-y-auto p-6">
               <div className="flex flex-col gap-6">
                 {children}
               </div>
@@ -770,14 +787,14 @@ export function RecordOverlay({
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in duration-150"
+        className="fixed inset-0 z-[var(--z-overlay)] bg-black/40 backdrop-blur-sm animate-in fade-in duration-150"
         onClick={closeOnBackdropClick ? requestClose : undefined}
       />
       <aside
         role="dialog"
         aria-label={ariaLabel}
         aria-modal="true"
-        className={`fixed top-0 right-0 z-50 h-full w-full ${RECORD_OVERLAY_SIDE_SIZE[size]} bg-background border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200${className ? ` ${className}` : ''}`}
+        className={`fixed top-0 right-0 z-[var(--z-overlay)] h-full w-full ${RECORD_OVERLAY_SIDE_SIZE[size]} bg-background border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200${className ? ` ${className}` : ''}`}
       >
         {arrows}
         {header}
@@ -786,7 +803,7 @@ export function RecordOverlay({
             {media}
           </div>
         )}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="flex flex-col gap-6">
             {children}
           </div>
@@ -903,4 +920,45 @@ export function useRecordOverlayStack<T = RecordOverlayStackItem>(
     close,
     replace,
   };
+}
+
+export interface RecordOverlayHostProps<T> {
+  /** Der Stack aus useRecordOverlayStack — der Host rendert dessen `top`. */
+  overlay: RecordOverlayStack<T>;
+  /** Body für den obersten Eintrag — die EINE semantische Verzweigung (switch über top.type). */
+  render: (top: T) => ReactNode;
+  /** Footer (Advance-Aktion) für den obersten Eintrag. */
+  footer?: (top: T) => ReactNode;
+  /** Bearbeiten-Pfad für den obersten Eintrag. */
+  onEdit?: (top: T) => void;
+  placement?: RecordOverlayProps['placement'];
+  size?: RecordOverlayProps['size'];
+  className?: string;
+}
+
+/**
+ * DIE eine Overlay-Shell pro Seite. Rendert den gesamten Stack in EINEM
+ * <RecordOverlay>: bei push/pop bleibt die Shell gemountet und nur der Body
+ * wechselt — Backdrop-Fade und Panel-Slide spielen NUR beim ersten Öffnen
+ * (ein <RecordOverlay> pro Record-TYP mit open-Flags remountet die Shell bei
+ * jedem Drill und blinkt). Back erscheint automatisch ab Stack-Tiefe 2;
+ * der Body-Scroll startet bei jedem Navigationsschritt oben.
+ */
+export function RecordOverlayHost<T>({ overlay, render, footer, onEdit, placement, size, className }: RecordOverlayHostProps<T>) {
+  const top = overlay.top;
+  return (
+    <RecordOverlay
+      open={overlay.open && top != null}
+      onClose={overlay.close}
+      onBack={overlay.canGoBack ? overlay.pop : undefined}
+      onEdit={top != null && onEdit ? () => onEdit(top) : undefined}
+      footer={top != null ? footer?.(top) : undefined}
+      scrollKey={overlay.stack.length}
+      placement={placement}
+      size={size}
+      className={className}
+    >
+      {top != null ? render(top) : null}
+    </RecordOverlay>
+  );
 }

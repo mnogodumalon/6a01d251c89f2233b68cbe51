@@ -132,7 +132,7 @@ export default function PublicFormPromptGeneratorPro() {
                 role="radio"
                 aria-checked={lookupKey(fields.vorlage) === 'email'}
                 onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'email' ? undefined : 'email') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-h-9 max-sm:min-h-11 max-sm:px-4 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   lookupKey(fields.vorlage) === 'email'
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background text-foreground border-input hover:bg-accent'
@@ -145,7 +145,7 @@ export default function PublicFormPromptGeneratorPro() {
                 role="radio"
                 aria-checked={lookupKey(fields.vorlage) === 'blogpost'}
                 onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'blogpost' ? undefined : 'blogpost') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-h-9 max-sm:min-h-11 max-sm:px-4 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   lookupKey(fields.vorlage) === 'blogpost'
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background text-foreground border-input hover:bg-accent'
@@ -158,7 +158,7 @@ export default function PublicFormPromptGeneratorPro() {
                 role="radio"
                 aria-checked={lookupKey(fields.vorlage) === 'linkedin'}
                 onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'linkedin' ? undefined : 'linkedin') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-h-9 max-sm:min-h-11 max-sm:px-4 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   lookupKey(fields.vorlage) === 'linkedin'
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background text-foreground border-input hover:bg-accent'
@@ -171,7 +171,7 @@ export default function PublicFormPromptGeneratorPro() {
                 role="radio"
                 aria-checked={lookupKey(fields.vorlage) === 'ein_bild_generieren'}
                 onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'ein_bild_generieren' ? undefined : 'ein_bild_generieren') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-h-9 max-sm:min-h-11 max-sm:px-4 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   lookupKey(fields.vorlage) === 'ein_bild_generieren'
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background text-foreground border-input hover:bg-accent'
@@ -184,7 +184,7 @@ export default function PublicFormPromptGeneratorPro() {
                 role="radio"
                 aria-checked={lookupKey(fields.vorlage) === 'manuell'}
                 onClick={() => setFields(f => ({ ...f, vorlage: (lookupKey(f.vorlage) === 'manuell' ? undefined : 'manuell') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-h-9 max-sm:min-h-11 max-sm:px-4 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   lookupKey(fields.vorlage) === 'manuell'
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background text-foreground border-input hover:bg-accent'
