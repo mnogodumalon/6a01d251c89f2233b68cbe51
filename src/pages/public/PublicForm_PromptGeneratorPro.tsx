@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { lookupKey } from '@/lib/formatters';
+import { tx } from '@/i18n';
 
 // Empty PROXY_BASE → relative URLs (dashboard and form-proxy share the domain).
 const PROXY_BASE = '';
@@ -23,7 +24,7 @@ async function submitPublicForm(fields: Record<string, unknown>, captchaToken: s
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(err || 'Submission failed');
+    throw new Error(err || tx('Submission failed'));
   }
   return res.json();
 }
@@ -82,7 +83,7 @@ export default function PublicFormPromptGeneratorPro() {
     e.preventDefault();
     const token = readCaptchaToken();
     if (!token) {
-      setError('Bitte warte auf die Spam-Prüfung und versuche es erneut.');
+      setError(tx('Bitte warte auf die Spam-Prüfung und versuche es erneut.'));
       return;
     }
     setSubmitting(true);
@@ -91,7 +92,7 @@ export default function PublicFormPromptGeneratorPro() {
       await submitPublicForm(cleanFields(fields), token);
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.');
+      setError(err.message || tx('Etwas ist schiefgelaufen. Bitte versuche es erneut.'));
     } finally {
       setSubmitting(false);
     }
@@ -106,10 +107,10 @@ export default function PublicFormPromptGeneratorPro() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold">Vielen Dank!</h2>
-          <p className="text-muted-foreground">Deine Eingabe wurde erfolgreich übermittelt.</p>
+          <h2 className="text-xl font-bold">{tx('Vielen Dank!')}</h2>
+          <p className="text-muted-foreground">{tx('Deine Eingabe wurde erfolgreich übermittelt.')}</p>
           <Button variant="outline" className="mt-4" onClick={() => { setSubmitted(false); setFields({}); }}>
-            Weitere Eingabe
+            {tx('Weitere Eingabe')}
           </Button>
         </div>
       </div>
@@ -120,12 +121,12 @@ export default function PublicFormPromptGeneratorPro() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Prompt-Generator Pro — Formular</h1>
+          <h1 className="text-2xl font-bold text-foreground">{tx('Prompt-Generator Pro — Formular')}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 bg-card rounded-xl border border-border p-6 shadow-md">
           <div className="space-y-2">
-            <Label htmlFor="vorlage">Vorlage wählen</Label>
+            <Label htmlFor="vorlage">{tx('Vorlage wählen')}</Label>
             <div role="radiogroup" className="flex flex-wrap gap-1.5">
               <button
                 type="button"
@@ -138,7 +139,7 @@ export default function PublicFormPromptGeneratorPro() {
                     : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
-                Professionelle E-Mail verfassen
+                {tx('Professionelle E-Mail verfassen')}
               </button>
               <button
                 type="button"
@@ -151,7 +152,7 @@ export default function PublicFormPromptGeneratorPro() {
                     : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
-                Blogpost-Gliederung erstellen
+                {tx('Blogpost-Gliederung erstellen')}
               </button>
               <button
                 type="button"
@@ -164,7 +165,7 @@ export default function PublicFormPromptGeneratorPro() {
                     : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
-                Social-Media-Post (LinkedIn)
+                {tx('Social-Media-Post (LinkedIn)')}
               </button>
               <button
                 type="button"
@@ -177,7 +178,7 @@ export default function PublicFormPromptGeneratorPro() {
                     : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
-                Ein Bild generieren
+                {tx('Ein Bild generieren')}
               </button>
               <button
                 type="button"
@@ -190,12 +191,12 @@ export default function PublicFormPromptGeneratorPro() {
                     : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
-                Manuelle Eingabe
+                {tx('Manuelle Eingabe')}
               </button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rolle_persona">Rolle / Persona der KI</Label>
+            <Label htmlFor="rolle_persona">{tx('Rolle / Persona der KI')}</Label>
             <Textarea
               id="rolle_persona"
               placeholder=""
@@ -205,7 +206,7 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="kontext">Kontext / Ausgangssituation</Label>
+            <Label htmlFor="kontext">{tx('Kontext / Ausgangssituation')}</Label>
             <Textarea
               id="kontext"
               placeholder=""
@@ -215,7 +216,7 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="aufgabe">Konkrete Aufgabe / Ziel</Label>
+            <Label htmlFor="aufgabe">{tx('Konkrete Aufgabe / Ziel')}</Label>
             <Textarea
               id="aufgabe"
               placeholder=""
@@ -225,7 +226,7 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="format_ausgabe">Format der Ausgabe</Label>
+            <Label htmlFor="format_ausgabe">{tx('Format der Ausgabe')}</Label>
             <Textarea
               id="format_ausgabe"
               placeholder=""
@@ -235,7 +236,7 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="regeln">Regeln & Einschränkungen</Label>
+            <Label htmlFor="regeln">{tx('Regeln & Einschränkungen')}</Label>
             <Textarea
               id="regeln"
               placeholder=""
@@ -245,7 +246,7 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="generierter_prompt">Generierter Prompt</Label>
+            <Label htmlFor="generierter_prompt">{tx('Generierter Prompt')}</Label>
             <Textarea
               id="generierter_prompt"
               placeholder=""
@@ -255,29 +256,29 @@ export default function PublicFormPromptGeneratorPro() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="prompt_generieren_button">Prompt generieren</Label>
+            <Label htmlFor="prompt_generieren_button">{tx('Prompt generieren')}</Label>
             <div className="flex items-center gap-2 pt-1">
               <Checkbox
                 id="prompt_generieren_button"
                 checked={!!fields.prompt_generieren_button}
                 onCheckedChange={(v) => setFields(f => ({ ...f, prompt_generieren_button: !!v }))}
               />
-              <Label htmlFor="prompt_generieren_button" className="font-normal">Prompt generieren</Label>
+              <Label htmlFor="prompt_generieren_button" className="font-normal">{tx('Prompt generieren')}</Label>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="prompt_copy_button">Prompt kopieren</Label>
+            <Label htmlFor="prompt_copy_button">{tx('Prompt kopieren')}</Label>
             <div className="flex items-center gap-2 pt-1">
               <Checkbox
                 id="prompt_copy_button"
                 checked={!!fields.prompt_copy_button}
                 onCheckedChange={(v) => setFields(f => ({ ...f, prompt_copy_button: !!v }))}
               />
-              <Label htmlFor="prompt_copy_button" className="font-normal">Prompt kopieren</Label>
+              <Label htmlFor="prompt_copy_button" className="font-normal">{tx('Prompt kopieren')}</Label>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="prompt_name">Name des Prompts</Label>
+            <Label htmlFor="prompt_name">{tx('Name des Prompts')}</Label>
             <Textarea
               id="prompt_name"
               placeholder=""
@@ -301,12 +302,12 @@ export default function PublicFormPromptGeneratorPro() {
           )}
 
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Wird gesendet...' : 'Absenden'}
+            {submitting ? tx('Wird gesendet...') : tx('Absenden')}
           </Button>
         </form>
 
         <p className="text-xs text-muted-foreground text-center mt-4">
-          Powered by Klar
+          {tx('Powered by Klar')}
         </p>
       </div>
     </div>

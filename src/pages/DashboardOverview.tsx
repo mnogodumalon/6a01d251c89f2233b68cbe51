@@ -17,6 +17,7 @@ import {
   IconCheck as IconCheckmark, IconChevronRight,
   IconFileText,
 } from '@tabler/icons-react';
+import { tx } from '@/i18n';
 
 const APPGROUP_ID = '6a01d251c89f2233b68cbe51';
 const REPAIR_ENDPOINT = '/claude/build/repair';
@@ -32,7 +33,7 @@ const VORLAGE_COLORS: Record<string, string> = {
 };
 
 function getVorlageLabel(vorlage: PromptGeneratorPro['fields']['vorlage']): string {
-  if (!vorlage) return 'Manuell';
+  if (!vorlage) return tx('Manuell');
   if (typeof vorlage === 'object' && 'label' in vorlage) return vorlage.label;
   const opt = VORLAGE_OPTIONS.find(o => o.key === vorlage);
   return opt?.label ?? String(vorlage);
@@ -72,7 +73,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 shrink-0">
       {copied ? <IconCopyCheck size={14} className="text-green-600" /> : <IconCopy size={14} />}
-      {copied ? 'Kopiert!' : 'Kopieren'}
+      {copied ? tx('Kopiert!') : tx('Kopieren')}
     </Button>
   );
 }
@@ -151,9 +152,9 @@ export default function DashboardOverview() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Prompt-Bibliothek</h1>
+          <h1 className="text-2xl font-bold text-foreground">{tx('Prompt-Bibliothek')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {promptGeneratorPro.length} gespeicherte Prompts
+            {promptGeneratorPro.length} {tx('gespeicherte Prompts')}
           </p>
         </div>
         <Button
@@ -161,7 +162,7 @@ export default function DashboardOverview() {
           className="gap-2 shrink-0"
         >
           <IconPlus size={16} />
-          Neuer Prompt
+          {tx('Neuer Prompt')}
         </Button>
       </div>
 
@@ -175,7 +176,7 @@ export default function DashboardOverview() {
               : 'bg-card text-muted-foreground border-border hover:border-foreground/30'
           }`}
         >
-          Alle
+          {tx('Alle')}
           <span className={`text-xs rounded-full px-1.5 py-0.5 font-semibold ${
             activeVorlage === null ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'
           }`}>
@@ -212,7 +213,7 @@ export default function DashboardOverview() {
           <div className="relative">
             <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground shrink-0" />
             <Input
-              placeholder="Prompts durchsuchen..."
+              placeholder={tx('Prompts durchsuchen...')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-9"
@@ -225,13 +226,13 @@ export default function DashboardOverview() {
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
                 <IconFileText size={40} className="text-muted-foreground/40" stroke={1.5} />
                 <div>
-                  <p className="font-medium text-muted-foreground">Keine Prompts gefunden</p>
+                  <p className="font-medium text-muted-foreground">{tx('Keine Prompts gefunden')}</p>
                   {(search || activeVorlage) && (
                     <button
                       onClick={() => { setSearch(''); setActiveVorlage(null); }}
                       className="text-sm text-primary hover:underline mt-1"
                     >
-                      Filter zurücksetzen
+                      {tx('Filter zurücksetzen')}
                     </button>
                   )}
                 </div>
@@ -243,7 +244,7 @@ export default function DashboardOverview() {
                     className="gap-1.5 mt-1"
                   >
                     <IconPlus size={14} />
-                    Ersten Prompt erstellen
+                    {tx('Ersten Prompt erstellen')}
                   </Button>
                 )}
               </div>
@@ -272,7 +273,7 @@ export default function DashboardOverview() {
                         {hasPrompt && (
                           <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 border border-green-200">
                             <IconCheckmark size={10} />
-                            Prompt
+                            {tx('Prompt')}
                           </span>
                         )}
                       </div>
@@ -302,9 +303,9 @@ export default function DashboardOverview() {
                 <IconSparkles size={26} className="text-primary" stroke={1.5} />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Prompt auswählen</h3>
+                <h3 className="font-semibold text-foreground">{tx('Prompt auswählen')}</h3>
                 <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Wähle einen Prompt aus der Liste, um Details und den generierten Text zu sehen.
+                  {tx('Wähle einen Prompt aus der Liste, um Details und den generierten Text zu sehen.')}
                 </p>
               </div>
               <Button
@@ -313,7 +314,7 @@ export default function DashboardOverview() {
                 className="gap-1.5 mt-1"
               >
                 <IconPlus size={14} />
-                Neuen Prompt erstellen
+                {tx('Neuen Prompt erstellen')}
               </Button>
             </div>
           ) : (
@@ -328,8 +329,8 @@ export default function DashboardOverview() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Erstellt: {formatDate(selectedRecord.createdat)}
-                    {selectedRecord.updatedat && ` · Aktualisiert: ${formatDate(selectedRecord.updatedat)}`}
+                    {tx('Erstellt:')} {formatDate(selectedRecord.createdat)}
+                    {selectedRecord.updatedat && tx` · Aktualisiert: ${formatDate(selectedRecord.updatedat)}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -340,7 +341,7 @@ export default function DashboardOverview() {
                     className="gap-1.5"
                   >
                     <IconPencil size={14} />
-                    Bearbeiten
+                    {tx('Bearbeiten')}
                   </Button>
                   <Button
                     variant="outline"
@@ -349,7 +350,7 @@ export default function DashboardOverview() {
                     className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5"
                   >
                     <IconTrash size={14} />
-                    Löschen
+                    {tx('Löschen')}
                   </Button>
                 </div>
               </div>
@@ -357,27 +358,27 @@ export default function DashboardOverview() {
               {/* Detail-Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <PromptSection
-                  label="Rolle / Persona der KI"
+                  label={tx('Rolle / Persona der KI')}
                   value={selectedRecord.fields.rolle_persona}
                   icon={<IconBrain size={12} />}
                 />
                 <PromptSection
-                  label="Kontext / Ausgangssituation"
+                  label={tx('Kontext / Ausgangssituation')}
                   value={selectedRecord.fields.kontext}
                   icon={<IconLayoutList size={12} />}
                 />
                 <PromptSection
-                  label="Konkrete Aufgabe / Ziel"
+                  label={tx('Konkrete Aufgabe / Ziel')}
                   value={selectedRecord.fields.aufgabe}
                   icon={<IconTarget size={12} />}
                 />
                 <PromptSection
-                  label="Format der Ausgabe"
+                  label={tx('Format der Ausgabe')}
                   value={selectedRecord.fields.format_ausgabe}
                   icon={<IconFileText size={12} />}
                 />
                 <PromptSection
-                  label="Regeln & Einschränkungen"
+                  label={tx('Regeln & Einschränkungen')}
                   value={selectedRecord.fields.regeln}
                   icon={<IconRuler size={12} />}
                 />
@@ -388,7 +389,7 @@ export default function DashboardOverview() {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-primary/10 bg-primary/10">
                       <div className="flex items-center gap-2">
                         <IconSparkles size={14} className="text-primary shrink-0" />
-                        <span className="text-sm font-semibold text-primary">Generierter Prompt</span>
+                        <span className="text-sm font-semibold text-primary">{tx('Generierter Prompt')}</span>
                       </div>
                       <CopyButton text={selectedRecord.fields.generierter_prompt} />
                     </div>
@@ -402,7 +403,7 @@ export default function DashboardOverview() {
 
                 {!selectedRecord.fields.generierter_prompt && (
                   <div className="rounded-xl border border-dashed border-muted-foreground/20 p-6 text-center">
-                    <p className="text-sm text-muted-foreground">Noch kein generierter Prompt gespeichert.</p>
+                    <p className="text-sm text-muted-foreground">{tx('Noch kein generierter Prompt gespeichert.')}</p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -410,7 +411,7 @@ export default function DashboardOverview() {
                       onClick={() => { setEditRecord(selectedRecord); setDialogOpen(true); }}
                     >
                       <IconPencil size={13} />
-                      Prompt hinzufügen
+                      {tx('Prompt hinzufügen')}
                     </Button>
                   </div>
                 )}
@@ -434,8 +435,8 @@ export default function DashboardOverview() {
       {/* Löschen bestätigen */}
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Prompt löschen"
-        description={`Möchtest du diesen Prompt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
+        title={tx('Prompt löschen')}
+        description={tx('Möchtest du diesen Prompt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')}
         onConfirm={handleDelete}
         onClose={() => setDeleteTarget(null)}
       />
@@ -472,7 +473,7 @@ function DashboardError({ error, onRetry }: { error: Error; onRetry: () => void 
 
   const handleRepair = async () => {
     setRepairing(true);
-    setRepairStatus('Reparatur wird gestartet...');
+    setRepairStatus(tx('Reparatur wird gestartet...'));
     setRepairFailed(false);
 
     const errorContext = JSON.stringify({
@@ -517,7 +518,7 @@ function DashboardError({ error, onRetry }: { error: Error; onRetry: () => void 
             setRepairDone(true);
             setRepairing(false);
           }
-          if (content.startsWith('[ERROR]') && !content.includes('Dashboard-Links')) {
+          if (content.startsWith('[ERROR]') && !content.includes('Dashboard-Links')) { /* i18n-exempt */
             setRepairFailed(true);
           }
         }
@@ -535,11 +536,11 @@ function DashboardError({ error, onRetry }: { error: Error; onRetry: () => void 
           <IconCheck size={22} className="text-green-500" />
         </div>
         <div className="text-center">
-          <h3 className="font-semibold text-foreground mb-1">Dashboard repariert</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">Das Problem wurde behoben. Bitte lade die Seite neu.</p>
+          <h3 className="font-semibold text-foreground mb-1">{tx('Dashboard repariert')}</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">{tx('Das Problem wurde behoben. Bitte lade die Seite neu.')}</p>
         </div>
         <Button size="sm" onClick={() => window.location.reload()}>
-          <IconRefresh size={14} className="mr-1" />Neu laden
+          <IconRefresh size={14} className="mr-1" />{tx('Neu laden')}
         </Button>
       </div>
     );
@@ -551,21 +552,21 @@ function DashboardError({ error, onRetry }: { error: Error; onRetry: () => void 
         <IconAlertCircle size={22} className="text-destructive" />
       </div>
       <div className="text-center">
-        <h3 className="font-semibold text-foreground mb-1">Fehler beim Laden</h3>
+        <h3 className="font-semibold text-foreground mb-1">{tx('Fehler beim Laden')}</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
           {repairing ? repairStatus : error.message}
         </p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={onRetry} disabled={repairing}>Erneut versuchen</Button>
+        <Button variant="outline" size="sm" onClick={onRetry} disabled={repairing}>{tx('Erneut versuchen')}</Button>
         <Button size="sm" onClick={handleRepair} disabled={repairing}>
           {repairing
             ? <span className="inline-block w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-1" />
             : <IconTool size={14} className="mr-1" />}
-          {repairing ? 'Repariere...' : 'Dashboard reparieren'}
+          {repairing ? tx('Repariere...') : tx('Dashboard reparieren')}
         </Button>
       </div>
-      {repairFailed && <p className="text-sm text-destructive">Automatische Reparatur fehlgeschlagen. Bitte kontaktiere den Support.</p>}
+      {repairFailed && <p className="text-sm text-destructive">{tx('Automatische Reparatur fehlgeschlagen. Bitte kontaktiere den Support.')}</p>}
     </div>
   );
 }
